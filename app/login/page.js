@@ -164,12 +164,21 @@ export default function LoginPage() {
               borderRadius: 8,
               fontWeight: 600,
               fontSize: 15,
+              border: "none",
+              cursor: carregando ? "not-allowed" : "pointer",
               transition: "background 0.15s",
             }}
           >
             {carregando ? "Entrando…" : "Entrar"}
           </button>
         </form>
+
+        <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: COLORS.textLight }}>
+          Não tem conta?{" "}
+          <a href="/cadastro" style={{ color: COLORS.primary, fontWeight: 600, textDecoration: "none" }}>
+            Cadastre-se
+          </a>
+        </p>
       </div>
     </div>
   );

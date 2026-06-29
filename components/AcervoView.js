@@ -182,7 +182,7 @@ function ConfirmModal({ mensagem, onConfirm, onClose }) {
   );
 }
 
-export default function AcervoView({ livrosIniciais }) {
+export default function AcervoView({ livrosIniciais, isAdmin = false }) {
   const [livros, setLivros] = useState(livrosIniciais);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todos");
@@ -247,12 +247,14 @@ export default function AcervoView({ livrosIniciais }) {
           <h1 style={{ fontFamily: "'Georgia', serif", fontSize: 22, fontWeight: 700, color: COLORS.primaryDark }}>Acervo</h1>
           <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 2 }}>{livros.length} título{livros.length !== 1 ? "s" : ""} cadastrado{livros.length !== 1 ? "s" : ""}</p>
         </div>
-        <button
-          onClick={() => setForm({ ...LIVRO_VAZIO })}
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 18px", background: COLORS.primary, color: "#fff", borderRadius: 8, fontWeight: 600, fontSize: 14 }}
-        >
-          <Plus size={16} /> Novo livro
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setForm({ ...LIVRO_VAZIO })}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 18px", background: COLORS.primary, color: "#fff", borderRadius: 8, fontWeight: 600, fontSize: 14 }}
+          >
+            <Plus size={16} /> Novo livro
+          </button>
+        )}
       </div>
 
       {/* Busca + filtro */}
@@ -323,21 +325,23 @@ export default function AcervoView({ livrosIniciais }) {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", borderTop: `1px solid ${COLORS.border}`, paddingTop: 10, marginTop: 4 }}>
-                <button
-                  onClick={() => setForm({ ...l, paginas: l.paginas ?? "", generos: l.generos ?? [] })}
-                  style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: COLORS.primary, padding: "4px 10px", borderRadius: 6, border: `1px solid ${COLORS.border}` }}
-                >
-                  <Edit2 size={13} /> Editar
-                </button>
-                <button
-                  onClick={() => setExcluindo(l)}
-                  disabled={l.status === "Emprestado"}
-                  style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: l.status === "Emprestado" ? COLORS.border : COLORS.danger, padding: "4px 10px", borderRadius: 6, border: `1px solid ${l.status === "Emprestado" ? COLORS.border : COLORS.dangerLight}` }}
-                >
-                  <Trash2 size={13} /> Excluir
-                </button>
-              </div>
+              {isAdmin && (
+                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", borderTop: `1px solid ${COLORS.border}`, paddingTop: 10, marginTop: 4 }}>
+                  <button
+                    onClick={() => setForm({ ...l, paginas: l.paginas ?? "", generos: l.generos ?? [] })}
+                    style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: COLORS.primary, padding: "4px 10px", borderRadius: 6, border: `1px solid ${COLORS.border}` }}
+                  >
+                    <Edit2 size={13} /> Editar
+                  </button>
+                  <button
+                    onClick={() => setExcluindo(l)}
+                    disabled={l.status === "Emprestado"}
+                    style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: l.status === "Emprestado" ? COLORS.border : COLORS.danger, padding: "4px 10px", borderRadius: 6, border: `1px solid ${l.status === "Emprestado" ? COLORS.border : COLORS.dangerLight}` }}
+                  >
+                    <Trash2 size={13} /> Excluir
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

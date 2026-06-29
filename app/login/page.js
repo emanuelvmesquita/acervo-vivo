@@ -28,8 +28,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/painel");
-    router.refresh();
+    window.location.href = "/painel";
   }
 
   return (

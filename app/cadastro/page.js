@@ -60,26 +60,45 @@ export default function CadastroPage() {
 
     setCarregando(true);
 
-    const res = await fetch("/api/cadastro", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nome: form.nome.trim(),
+    try {
+      const res = await fetch("/api/cadastro", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: form.nome.trim(),
+          email: form.email.trim(),
+          cpf: form.cpf,
+          telefone: form.telefone,
+          senha: form.senha,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setErro(json.error ?? "Erro ao criar conta.");
+        setCarregando(false);
+        return;
+      }
+
+      // Login automático após cadastro
+      const supabase = createClient();
+      const { error: loginErr } = await supabase.auth.signInWithPassword({
         email: form.email.trim(),
-        cpf: form.cpf,
-        telefone: form.telefone,
-        senha: form.senha,
-      }),
-    });
+        password: form.senha,
+      });
 
-    const json = await res.json();
-    if (!res.ok) { setErro(json.error ?? "Erro ao criar conta."); setCarregando(false); return; }
+      if (loginErr) {
+        // Conta criada mas login falhou — redireciona para login manual
+        window.location.href = "/login";
+        return;
+      }
 
-    // Faz login automático após cadastro
-    const supabase = createClient();
-    await supabase.auth.signInWithPassword({ email: form.email.trim(), password: form.senha });
-    router.push("/painel");
-    router.refresh();
+      // Reload completo garante que o cookie de sessão seja lido pelo proxy
+      window.location.href = "/painel";
+    } catch {
+      setErro("Erro inesperado. Tente novamente.");
+      setCarregando(false);
+    }
   }
 
   return (

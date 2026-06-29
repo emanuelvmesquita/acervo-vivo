@@ -9,15 +9,17 @@ function fmtDateTime(s) {
 }
 
 const STATUS_COLORS = {
-  enviado: { bg: COLORS.successLight, color: COLORS.success },
-  falhou: { bg: COLORS.dangerLight, color: COLORS.danger },
-  pendente: { bg: COLORS.warnLight, color: COLORS.warn },
+  enviado:   { bg: COLORS.successLight, color: COLORS.success },
+  entregue:  { bg: "#D4EDDA",           color: "#155724" },
+  lido:      { bg: "#CCE5FF",           color: "#004085" },
+  falhou:    { bg: COLORS.dangerLight,  color: COLORS.danger },
+  pendente:  { bg: COLORS.warnLight,    color: COLORS.warn },
+  sem_canal: { bg: COLORS.bg,           color: COLORS.textLight },
 };
 
 export default function NotificacoesView({ notifsIniciais, isAdmin }) {
   const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [filtroCanal, setFiltroCanal] = useState("Todos");
-  const [busca, setBusca] = useState([]);
 
   const canais = useMemo(() => {
     const set = new Set(notifsIniciais.map(n => n.canal).filter(Boolean));

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { COLORS } from "@/lib/design";
-import { Plus, Search, BookOpen, Edit2, Trash2, X, Check } from "lucide-react";
+import { Plus, Search, BookOpen, Edit2, Trash2, X, Check, LayoutGrid, List } from "lucide-react";
 import BuscaGoogleBooks from "@/components/BuscaGoogleBooks";
 
 const CONSERVACAO = ["Ótimo", "Bom", "Regular", "Ruim"];
@@ -186,6 +186,7 @@ export default function AcervoView({ livrosIniciais, isAdmin = false }) {
   const [livros, setLivros] = useState(livrosIniciais);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todos");
+  const [visualizacao, setVisualizacao] = useState("grade");
   const [form, setForm] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [excluindo, setExcluindo] = useState(null);
@@ -242,19 +243,33 @@ export default function AcervoView({ livrosIniciais, isAdmin = false }) {
 
   return (
     <div>
+      {/* Cabeçalho */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: "'Georgia', serif", fontSize: 22, fontWeight: 700, color: COLORS.primaryDark }}>Acervo</h1>
           <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 2 }}>{livros.length} título{livros.length !== 1 ? "s" : ""} cadastrado{livros.length !== 1 ? "s" : ""}</p>
         </div>
-        {isAdmin && (
-          <button
-            onClick={() => setForm({ ...LIVRO_VAZIO })}
-            style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 18px", background: COLORS.primary, color: "#fff", borderRadius: 8, fontWeight: 600, fontSize: 14 }}
-          >
-            <Plus size={16} /> Novo livro
-          </button>
-        )}
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {/* Toggle visualização */}
+          <div style={{ display: "flex", border: `1.5px solid ${COLORS.border}`, borderRadius: 8, overflow: "hidden" }}>
+            {[{ v: "grade", icon: <LayoutGrid size={16} /> }, { v: "lista", icon: <List size={16} /> }].map(({ v, icon }) => (
+              <button key={v} onClick={() => setVisualizacao(v)} style={{
+                padding: "7px 12px", border: "none", cursor: "pointer",
+                background: visualizacao === v ? COLORS.primary : "transparent",
+                color: visualizacao === v ? "#fff" : COLORS.textLight,
+                display: "flex", alignItems: "center",
+              }}>{icon}</button>
+            ))}
+          </div>
+          {isAdmin && (
+            <button
+              onClick={() => setForm({ ...LIVRO_VAZIO })}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 18px", background: COLORS.primary, color: "#fff", borderRadius: 8, fontWeight: 600, fontSize: 14 }}
+            >
+              <Plus size={16} /> Novo livro
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Busca + filtro */}
@@ -280,7 +295,6 @@ export default function AcervoView({ livrosIniciais, isAdmin = false }) {
         </div>
       </div>
 
-      {/* Lista */}
       {livrosFiltrados.length === 0 ? (
         <div style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "48px 24px", textAlign: "center" }}>
           <BookOpen size={36} color={COLORS.border} style={{ marginBottom: 12 }} />
@@ -288,60 +302,94 @@ export default function AcervoView({ livrosIniciais, isAdmin = false }) {
             {busca || filtroStatus !== "Todos" ? "Nenhum livro encontrado com esse filtro." : "Nenhum livro cadastrado ainda."}
           </p>
         </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+      ) : visualizacao === "grade" ? (
+        /* ── GRADE ── */
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
           {livrosFiltrados.map(l => (
-            <div key={l.id} style={{
-              background: COLORS.bgCard, border: `1px solid ${COLORS.border}`,
-              borderRadius: 10, padding: "16px 18px",
-              display: "flex", flexDirection: "column", gap: 8,
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                <div style={{ display: "flex", gap: 10, flex: 1, minWidth: 0 }}>
-                  {l.foto && (
-                    <img src={l.foto} alt="Capa" style={{ width: 40, height: 56, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
-                      onError={e => { e.currentTarget.style.display = "none"; }} />
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text, lineHeight: 1.3, marginBottom: 2 }}>{l.titulo}</div>
-                    <div style={{ fontSize: 12, color: COLORS.textLight }}>{l.autor || "—"}</div>
+            <div key={l.id} style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              {/* Capa */}
+              <div style={{ position: "relative", height: 200, background: `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 100%)`, overflow: "hidden", flexShrink: 0 }}>
+                {l.foto
+                  ? <img src={l.foto} alt="Capa" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.currentTarget.style.display = "none"; }} />
+                  : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}><BookOpen size={52} color="rgba(255,255,255,0.25)" /></div>
+                }
+                <div style={{ position: "absolute", top: 8, right: 8 }}><Badge status={l.status} /></div>
+              </div>
+              {/* Info */}
+              <div style={{ padding: "12px 14px", flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text, lineHeight: 1.3 }}>{l.titulo}</div>
+                <div style={{ fontSize: 12, color: COLORS.textLight }}>{l.autor || "—"}</div>
+                <div style={{ display: "flex", gap: 8, fontSize: 11, color: COLORS.textLight }}>
+                  {l.ano && <span>{l.ano}</span>}
+                  {l.editora && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.editora}</span>}
+                </div>
+                {l.generos?.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2 }}>
+                    {l.generos.slice(0, 2).map(g => (
+                      <span key={g} style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: COLORS.bg, color: COLORS.textLight, border: `1px solid ${COLORS.border}` }}>{g}</span>
+                    ))}
+                    {l.generos.length > 2 && <span style={{ fontSize: 10, color: COLORS.textLight }}>+{l.generos.length - 2}</span>}
                   </div>
+                )}
+                {isAdmin && (
+                  <div style={{ display: "flex", gap: 6, marginTop: "auto", paddingTop: 10, borderTop: `1px solid ${COLORS.border}` }}>
+                    <button onClick={() => setForm({ ...l, paginas: l.paginas ?? "", generos: l.generos ?? [] })}
+                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, fontSize: 12, color: COLORS.primary, padding: "5px 0", borderRadius: 6, border: `1px solid ${COLORS.border}`, background: "none" }}>
+                      <Edit2 size={12} /> Editar
+                    </button>
+                    <button onClick={() => setExcluindo(l)} disabled={l.status === "Emprestado"}
+                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, fontSize: 12, color: l.status === "Emprestado" ? COLORS.border : COLORS.danger, padding: "5px 0", borderRadius: 6, border: `1px solid ${l.status === "Emprestado" ? COLORS.border : COLORS.dangerLight}`, background: "none" }}>
+                      <Trash2 size={12} /> Excluir
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* ── LISTA ── */
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {livrosFiltrados.map(l => (
+            <div key={l.id} style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "12px 16px", display: "flex", gap: 14, alignItems: "center" }}>
+              {/* Capa */}
+              <div style={{ width: 46, height: 64, flexShrink: 0, borderRadius: 6, overflow: "hidden", background: `linear-gradient(135deg, ${COLORS.primaryDark}, ${COLORS.primary})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {l.foto
+                  ? <img src={l.foto} alt="Capa" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.currentTarget.style.display = "none"; }} />
+                  : <BookOpen size={18} color="rgba(255,255,255,0.4)" />
+                }
+              </div>
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text, marginBottom: 2 }}>{l.titulo}</div>
+                <div style={{ fontSize: 12, color: COLORS.textLight, marginBottom: 6 }}>
+                  {[l.autor, l.editora, l.ano, l.tombo ? `#${l.tombo}` : null].filter(Boolean).join(" · ")}
                 </div>
+                {l.generos?.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {l.generos.slice(0, 3).map(g => (
+                      <span key={g} style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: COLORS.bg, color: COLORS.textLight, border: `1px solid ${COLORS.border}` }}>{g}</span>
+                    ))}
+                    {l.generos.length > 3 && <span style={{ fontSize: 10, color: COLORS.textLight }}>+{l.generos.length - 3}</span>}
+                  </div>
+                )}
+              </div>
+              {/* Badge + ações */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, flexShrink: 0 }}>
                 <Badge status={l.status} />
+                {isAdmin && (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => setForm({ ...l, paginas: l.paginas ?? "", generos: l.generos ?? [] })}
+                      style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: COLORS.primary, padding: "4px 10px", borderRadius: 6, border: `1px solid ${COLORS.border}`, background: "none" }}>
+                      <Edit2 size={12} /> Editar
+                    </button>
+                    <button onClick={() => setExcluindo(l)} disabled={l.status === "Emprestado"}
+                      style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: l.status === "Emprestado" ? COLORS.border : COLORS.danger, padding: "4px 10px", borderRadius: 6, border: `1px solid ${l.status === "Emprestado" ? COLORS.border : COLORS.dangerLight}`, background: "none" }}>
+                      <Trash2 size={12} /> Excluir
+                    </button>
+                  </div>
+                )}
               </div>
-
-              <div style={{ display: "flex", gap: 12, fontSize: 12, color: COLORS.textLight }}>
-                {l.ano && <span>{l.ano}</span>}
-                {l.editora && <span>{l.editora}</span>}
-                {l.tombo && <span>#{l.tombo}</span>}
-              </div>
-
-              {l.generos?.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {l.generos.slice(0, 3).map(g => (
-                    <span key={g} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: COLORS.bg, color: COLORS.textLight, border: `1px solid ${COLORS.border}` }}>{g}</span>
-                  ))}
-                  {l.generos.length > 3 && <span style={{ fontSize: 11, color: COLORS.textLight }}>+{l.generos.length - 3}</span>}
-                </div>
-              )}
-
-              {isAdmin && (
-                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", borderTop: `1px solid ${COLORS.border}`, paddingTop: 10, marginTop: 4 }}>
-                  <button
-                    onClick={() => setForm({ ...l, paginas: l.paginas ?? "", generos: l.generos ?? [] })}
-                    style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: COLORS.primary, padding: "4px 10px", borderRadius: 6, border: `1px solid ${COLORS.border}` }}
-                  >
-                    <Edit2 size={13} /> Editar
-                  </button>
-                  <button
-                    onClick={() => setExcluindo(l)}
-                    disabled={l.status === "Emprestado"}
-                    style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: l.status === "Emprestado" ? COLORS.border : COLORS.danger, padding: "4px 10px", borderRadius: 6, border: `1px solid ${l.status === "Emprestado" ? COLORS.border : COLORS.dangerLight}` }}
-                  >
-                    <Trash2 size={13} /> Excluir
-                  </button>
-                </div>
-              )}
             </div>
           ))}
         </div>

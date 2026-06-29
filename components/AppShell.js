@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, BookOpen, BookCopy, RefreshCw, Bell,
-  PenLine, Heart, Users, BookMarked, Settings, UsersRound,
+  PenLine, Heart, Users, Settings, UsersRound,
   LogOut, Menu, X, Bookmark,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -56,7 +56,7 @@ function NavLink({ href, label, icon: Icon, onClick }) {
   );
 }
 
-export default function AppShell({ user, profile, children }) {
+export default function AppShell({ profile, children }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const isAdmin = profile?.perfil === "administrador";
@@ -215,7 +215,7 @@ export default function AppShell({ user, profile, children }) {
           <div style={{ width: 30 }} />
         </header>
 
-        <main style={{ flex: 1, padding: "28px 24px", width: "100%", minWidth: 0 }}>
+        <main style={{ flex: 1, padding: "20px 16px", width: "100%", minWidth: 0 }}>
           {children}
         </main>
       </div>
@@ -224,10 +224,11 @@ export default function AppShell({ user, profile, children }) {
         @media (min-width: 768px) {
           .sidebar-desktop { display: block !important; }
           header { display: none !important; }
-          main { margin-left: 220px; padding: 32px 40px; }
-        }
-        @media (min-width: 1280px) {
-          main { padding: 36px 56px; }
+          main {
+            margin-left: 220px;
+            padding: 32px 40px;
+            max-width: calc(1200px + 220px);
+          }
         }
       `}</style>
     </div>

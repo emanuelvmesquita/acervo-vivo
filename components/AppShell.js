@@ -215,8 +215,10 @@ export default function AppShell({ profile, children }) {
           <div style={{ width: 30 }} />
         </header>
 
-        <main style={{ flex: 1, padding: "20px 16px", width: "100%", minWidth: 0 }}>
-          {children}
+        <main style={{ flex: 1, padding: "20px 16px", minWidth: 0 }}>
+          <div className="content-wrapper">
+            {children}
+          </div>
         </main>
       </div>
 
@@ -226,8 +228,11 @@ export default function AppShell({ profile, children }) {
           header { display: none !important; }
           main {
             margin-left: 220px;
-            padding: 32px 40px;
-            max-width: calc(1200px + 220px);
+            padding: 32px 24px;
+          }
+          .content-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
           }
         }
       `}</style>

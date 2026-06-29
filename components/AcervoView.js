@@ -229,6 +229,35 @@ function LivroForm({ livro, onChange, onSave, onClose, salvando }) {
           <Input label="Páginas" type="number" placeholder="0" {...field("paginas")} />
         </div>
 
+        {/* Capa */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: COLORS.textLight, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" }}>Capa</label>
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <div style={{ width: 72, height: 100, flexShrink: 0, borderRadius: 6, border: `1.5px solid ${COLORS.border}`, overflow: "hidden", background: COLORS.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {livro.foto
+                ? <img src={livro.foto} alt="Capa" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.currentTarget.style.display = "none"; }} />
+                : <BookOpen size={24} color={COLORS.border} />}
+            </div>
+            <div style={{ flex: 1 }}>
+              <input
+                value={livro.foto}
+                onChange={e => onChange({ ...livro, foto: e.target.value })}
+                placeholder="URL da imagem da capa"
+                style={{ width: "100%", padding: "9px 12px", border: `1.5px solid ${COLORS.border}`, borderRadius: 8, fontSize: 13, background: COLORS.bg, outline: "none", boxSizing: "border-box" }}
+              />
+              {livro.foto && (
+                <button onClick={() => onChange({ ...livro, foto: "" })}
+                  style={{ marginTop: 6, fontSize: 12, color: COLORS.danger, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                  Remover imagem
+                </button>
+              )}
+              <p style={{ margin: "6px 0 0", fontSize: 11, color: COLORS.textLight }}>
+                Preenchida automaticamente pelo Google Books ou cole uma URL manualmente.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Conservação */}
         <div style={{ marginBottom: 14 }}>
           <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: COLORS.textLight, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" }}>Conservação</label>
@@ -408,9 +437,15 @@ export default function AcervoView({ livrosIniciais }) {
               display: "flex", flexDirection: "column", gap: 8,
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text, lineHeight: 1.3, marginBottom: 2 }}>{l.titulo}</div>
-                  <div style={{ fontSize: 12, color: COLORS.textLight }}>{l.autor || "—"}</div>
+                <div style={{ display: "flex", gap: 10, flex: 1, minWidth: 0 }}>
+                  {l.foto && (
+                    <img src={l.foto} alt="Capa" style={{ width: 40, height: 56, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
+                      onError={e => { e.currentTarget.style.display = "none"; }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text, lineHeight: 1.3, marginBottom: 2 }}>{l.titulo}</div>
+                    <div style={{ fontSize: 12, color: COLORS.textLight }}>{l.autor || "—"}</div>
+                  </div>
                 </div>
                 <Badge status={l.status} />
               </div>

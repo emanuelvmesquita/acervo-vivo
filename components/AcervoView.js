@@ -49,22 +49,28 @@ function BuscaGoogleBooks({ onPreencher }) {
   const [resultados, setResultados] = useState([]);
   const [buscando, setBuscando] = useState(false);
   const [aberto, setAberto] = useState(false);
+  const [erroApi, setErroApi] = useState("");
 
   async function buscar() {
     const q = query.trim();
     if (!q) return;
     setBuscando(true);
     setAberto(true);
+    setErroApi("");
     try {
       const digitos = q.replace(/[-\s]/g, "");
       const isIsbn = /^\d{10,13}$/.test(digitos);
       const term = isIsbn ? `isbn:${digitos}` : q;
-      const res = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(term)}&maxResults=5`
-      );
+      const res = await fetch(`/api/google-books?q=${encodeURIComponent(term)}`);
       const json = await res.json();
-      setResultados(json.items ?? []);
-    } catch {
+      if (!res.ok) {
+        setErroApi(json.error ?? "Erro ao buscar.");
+        setResultados([]);
+      } else {
+        setResultados(json.items ?? []);
+      }
+    } catch (err) {
+      setErroApi(err.message ?? "Erro de rede.");
       setResultados([]);
     }
     setBuscando(false);
@@ -119,6 +125,8 @@ function BuscaGoogleBooks({ onPreencher }) {
         <div style={{ marginTop: 6, border: `1.5px solid ${COLORS.border}`, borderRadius: 8, background: COLORS.bgCard, overflow: "hidden", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}>
           {buscando ? (
             <p style={{ margin: 0, padding: "14px 16px", fontSize: 13, color: COLORS.textLight }}>Buscando…</p>
+          ) : erroApi ? (
+            <p style={{ margin: 0, padding: "14px 16px", fontSize: 13, color: COLORS.danger }}>{erroApi}</p>
           ) : resultados.length === 0 ? (
             <p style={{ margin: 0, padding: "14px 16px", fontSize: 13, color: COLORS.textLight }}>Nenhum resultado encontrado.</p>
           ) : (

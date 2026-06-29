@@ -81,7 +81,8 @@ export default function AppShell({ profile, children }) {
       padding: "24px 12px 16px",
     }}>
       {/* Brand */}
-      <div style={{ paddingLeft: 8, marginBottom: 28 }}>
+      <div style={{ paddingLeft: 8, marginBottom: 28, display: "flex", alignItems: "center", gap: 9 }}>
+        <BookOpen size={22} color="#F97316" strokeWidth={2.2} />
         <span style={{
           fontFamily: "'Georgia', serif",
           fontSize: 18,
@@ -116,24 +117,17 @@ export default function AppShell({ profile, children }) {
       </div>
 
       {/* User + logout */}
-      <div style={{ borderTop: `1px solid rgba(255,255,255,0.1)`, paddingTop: 16, marginTop: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 8, marginBottom: 12 }}>
+      <div style={{ borderTop: `1px solid rgba(255,255,255,0.1)`, paddingTop: 14, marginTop: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 8, paddingRight: 6 }}>
           <div style={{
-            width: 34,
-            height: 34,
-            borderRadius: "50%",
+            width: 32, height: 32, borderRadius: "50%",
             background: COLORS.primaryLight,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 15,
-            fontWeight: 700,
-            color: "#fff",
-            flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 14, fontWeight: 700, color: "#fff", flexShrink: 0,
           }}>
             {profile?.nome?.[0] ?? "?"}
           </div>
-          <div style={{ overflow: "hidden" }}>
+          <div style={{ flex: 1, overflow: "hidden" }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {profile?.nome?.split(" ")[0] ?? ""}
             </div>
@@ -141,24 +135,19 @@ export default function AppShell({ profile, children }) {
               {profile?.perfil}
             </div>
           </div>
+          <button
+            onClick={handleLogout}
+            title="Sair"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 30, height: 30, borderRadius: 6, flexShrink: 0,
+              color: COLORS.sidebarText, background: "transparent", border: "none",
+              cursor: "pointer", transition: "all 0.15s",
+            }}
+          >
+            <LogOut size={16} />
+          </button>
         </div>
-        <button
-          onClick={handleLogout}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            width: "100%",
-            padding: "8px 16px",
-            borderRadius: 8,
-            color: COLORS.sidebarText,
-            fontSize: 13,
-            transition: "all 0.15s",
-          }}
-        >
-          <LogOut size={15} />
-          Sair
-        </button>
       </div>
     </nav>
   );

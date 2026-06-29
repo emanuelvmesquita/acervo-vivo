@@ -89,7 +89,7 @@ function LivroModal({ livro, userId, onSave, onClose }) {
         </div>
         <div style={{ padding: "20px 24px" }}>
           {!livro?.id && (
-            <BuscaGoogleBooks onPreencher={dados => setForm(f => ({ ...f, ...dados }))} />
+            <BuscaGoogleBooks onPreencher={({ paginas: _, ...dados }) => setForm(f => ({ ...f, ...dados }))} />
           )}
           {field("Título *", "titulo", { placeholder: "Ex: Dom Casmurro" })}
           {field("Autor", "autor", { placeholder: "Ex: Machado de Assis" })}

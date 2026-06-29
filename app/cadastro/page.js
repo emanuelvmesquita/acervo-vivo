@@ -116,6 +116,38 @@ export default function CadastroPage() {
       background: `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 100%)`,
       padding: 16,
     }}>
+
+      {/* Overlay de loading */}
+      {carregando && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 100,
+          background: "rgba(0,0,0,0.55)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{
+            background: "#fff", borderRadius: 16, padding: "36px 40px",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
+            boxShadow: "0 24px 60px rgba(0,0,0,0.3)",
+          }}>
+            <div className="spinner" />
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 16, color: COLORS.primaryDark }}>
+              Criando sua conta…
+            </p>
+            <p style={{ margin: 0, fontSize: 13, color: COLORS.textLight }}>
+              Isso pode levar alguns segundos
+            </p>
+          </div>
+          <style>{`
+            @keyframes spin { to { transform: rotate(360deg); } }
+            .spinner {
+              width: 48px; height: 48px; border-radius: 50%;
+              border: 4px solid ${COLORS.border};
+              border-top-color: ${COLORS.primary};
+              animation: spin 0.8s linear infinite;
+            }
+          `}</style>
+        </div>
+      )}
       <div style={{
         background: COLORS.bgCard,
         borderRadius: 16,

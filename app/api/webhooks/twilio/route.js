@@ -24,7 +24,10 @@ const STATUS_MAP = {
 export async function POST(request) {
   const authToken  = process.env.TWILIO_AUTH_TOKEN ?? "";
   const signature  = request.headers.get("x-twilio-signature") ?? "";
-  const url        = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/twilio`;
+  // NEXT_PUBLIC_APP_URL (production) ou VERCEL_URL (preview) — VERCEL_URL não tem protocolo
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+    ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
+  const url = `${baseUrl}/api/webhooks/twilio`;
 
   // Lê body como form-encoded
   const text   = await request.text();

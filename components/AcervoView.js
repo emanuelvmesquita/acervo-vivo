@@ -243,14 +243,27 @@ export default function AcervoView({ livrosIniciais, isAdmin = false }) {
 
   return (
     <div>
+      <style>{`
+        .acv-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+        .acv-lista-row { display: flex; gap: 14px; align-items: center; }
+        .acv-lista-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+        .acv-controles { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .acv-filtros { display: flex; gap: 6px; flex-wrap: wrap; }
+        @media (max-width: 600px) {
+          .acv-grade { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          .acv-lista-row { flex-wrap: wrap; }
+          .acv-lista-meta { flex-direction: row; justify-content: space-between; width: 100%; }
+          .acv-controles { flex-direction: column; }
+        }
+      `}</style>
+
       {/* Cabeçalho */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: "'Georgia', serif", fontSize: 22, fontWeight: 700, color: COLORS.primaryDark }}>Acervo</h1>
           <p style={{ fontSize: 13, color: COLORS.textLight, marginTop: 2 }}>{livros.length} título{livros.length !== 1 ? "s" : ""} cadastrado{livros.length !== 1 ? "s" : ""}</p>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {/* Toggle visualização */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ display: "flex", border: `1.5px solid ${COLORS.border}`, borderRadius: 8, overflow: "hidden" }}>
             {[{ v: "grade", icon: <LayoutGrid size={16} /> }, { v: "lista", icon: <List size={16} /> }].map(({ v, icon }) => (
               <button key={v} onClick={() => setVisualizacao(v)} style={{
@@ -273,17 +286,17 @@ export default function AcervoView({ livrosIniciais, isAdmin = false }) {
       </div>
 
       {/* Busca + filtro */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
+      <div className="acv-controles">
+        <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
           <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: COLORS.textLight }} />
           <input
             value={busca}
             onChange={e => setBusca(e.target.value)}
             placeholder="Buscar por título, autor, ISBN ou tombo…"
-            style={{ width: "100%", padding: "9px 12px 9px 36px", border: `1.5px solid ${COLORS.border}`, borderRadius: 8, fontSize: 14, background: COLORS.bgCard, outline: "none" }}
+            style={{ width: "100%", padding: "9px 12px 9px 36px", border: `1.5px solid ${COLORS.border}`, borderRadius: 8, fontSize: 14, background: COLORS.bgCard, outline: "none", boxSizing: "border-box" }}
           />
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div className="acv-filtros">
           {["Todos", "Disponível", "Emprestado"].map(s => (
             <button key={s} onClick={() => setFiltroStatus(s)} style={{
               padding: "8px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500,
@@ -304,29 +317,35 @@ export default function AcervoView({ livrosIniciais, isAdmin = false }) {
         </div>
       ) : visualizacao === "grade" ? (
         /* ── GRADE ── */
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
+        <div className="acv-grade">
           {livrosFiltrados.map(l => (
             <div key={l.id} style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-              {/* Capa */}
-              <div style={{ position: "relative", height: 200, background: `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 100%)`, overflow: "hidden", flexShrink: 0 }}>
-                {l.foto
-                  ? <img src={l.foto} alt="Capa" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.currentTarget.style.display = "none"; }} />
-                  : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}><BookOpen size={52} color="rgba(255,255,255,0.25)" /></div>
-                }
+              {/* Capa — proporção 2:3 com position absolute para não distorcer */}
+              <div style={{ position: "relative", width: "100%", aspectRatio: "2/3", background: `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 100%)`, flexShrink: 0, overflow: "hidden" }}>
+                {l.foto && (
+                  <img src={l.foto} alt="Capa"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={e => { e.currentTarget.style.display = "none"; }} />
+                )}
+                {!l.foto && (
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <BookOpen size={44} color="rgba(255,255,255,0.25)" />
+                  </div>
+                )}
                 <div style={{ position: "absolute", top: 8, right: 8 }}><Badge status={l.status} /></div>
               </div>
               {/* Info */}
               <div style={{ padding: "12px 14px", flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text, lineHeight: 1.3 }}>{l.titulo}</div>
-                <div style={{ fontSize: 12, color: COLORS.textLight }}>{l.autor || "—"}</div>
-                <div style={{ display: "flex", gap: 8, fontSize: 11, color: COLORS.textLight }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.text, lineHeight: 1.3 }}>{l.titulo}</div>
+                <div style={{ fontSize: 11, color: COLORS.textLight }}>{l.autor || "—"}</div>
+                <div style={{ display: "flex", gap: 6, fontSize: 11, color: COLORS.textLight, flexWrap: "wrap" }}>
                   {l.ano && <span>{l.ano}</span>}
                   {l.editora && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.editora}</span>}
                 </div>
                 {l.generos?.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: 2 }}>
                     {l.generos.slice(0, 2).map(g => (
-                      <span key={g} style={{ fontSize: 10, padding: "2px 7px", borderRadius: 10, background: COLORS.bg, color: COLORS.textLight, border: `1px solid ${COLORS.border}` }}>{g}</span>
+                      <span key={g} style={{ fontSize: 10, padding: "2px 6px", borderRadius: 10, background: COLORS.bg, color: COLORS.textLight, border: `1px solid ${COLORS.border}` }}>{g}</span>
                     ))}
                     {l.generos.length > 2 && <span style={{ fontSize: 10, color: COLORS.textLight }}>+{l.generos.length - 2}</span>}
                   </div>
@@ -334,12 +353,12 @@ export default function AcervoView({ livrosIniciais, isAdmin = false }) {
                 {isAdmin && (
                   <div style={{ display: "flex", gap: 6, marginTop: "auto", paddingTop: 10, borderTop: `1px solid ${COLORS.border}` }}>
                     <button onClick={() => setForm({ ...l, paginas: l.paginas ?? "", generos: l.generos ?? [] })}
-                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, fontSize: 12, color: COLORS.primary, padding: "5px 0", borderRadius: 6, border: `1px solid ${COLORS.border}`, background: "none" }}>
-                      <Edit2 size={12} /> Editar
+                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, fontSize: 11, color: COLORS.primary, padding: "5px 0", borderRadius: 6, border: `1px solid ${COLORS.border}`, background: "none", cursor: "pointer" }}>
+                      <Edit2 size={11} /> Editar
                     </button>
                     <button onClick={() => setExcluindo(l)} disabled={l.status === "Emprestado"}
-                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, fontSize: 12, color: l.status === "Emprestado" ? COLORS.border : COLORS.danger, padding: "5px 0", borderRadius: 6, border: `1px solid ${l.status === "Emprestado" ? COLORS.border : COLORS.dangerLight}`, background: "none" }}>
-                      <Trash2 size={12} /> Excluir
+                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4, fontSize: 11, color: l.status === "Emprestado" ? COLORS.border : COLORS.danger, padding: "5px 0", borderRadius: 6, border: `1px solid ${l.status === "Emprestado" ? COLORS.border : COLORS.dangerLight}`, background: "none", cursor: "pointer" }}>
+                      <Trash2 size={11} /> Excluir
                     </button>
                   </div>
                 )}
@@ -351,11 +370,11 @@ export default function AcervoView({ livrosIniciais, isAdmin = false }) {
         /* ── LISTA ── */
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {livrosFiltrados.map(l => (
-            <div key={l.id} style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "12px 16px", display: "flex", gap: 14, alignItems: "center" }}>
-              {/* Capa */}
-              <div style={{ width: 46, height: 64, flexShrink: 0, borderRadius: 6, overflow: "hidden", background: `linear-gradient(135deg, ${COLORS.primaryDark}, ${COLORS.primary})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div key={l.id} className="acv-lista-row" style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "12px 16px" }}>
+              {/* Capa — proporção 2:3 exata */}
+              <div style={{ width: 48, height: 72, flexShrink: 0, borderRadius: 5, overflow: "hidden", background: `linear-gradient(135deg, ${COLORS.primaryDark}, ${COLORS.primary})`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                 {l.foto
-                  ? <img src={l.foto} alt="Capa" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.currentTarget.style.display = "none"; }} />
+                  ? <img src={l.foto} alt="Capa" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.currentTarget.style.display = "none"; }} />
                   : <BookOpen size={18} color="rgba(255,255,255,0.4)" />
                 }
               </div>
@@ -375,16 +394,16 @@ export default function AcervoView({ livrosIniciais, isAdmin = false }) {
                 )}
               </div>
               {/* Badge + ações */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, flexShrink: 0 }}>
+              <div className="acv-lista-meta">
                 <Badge status={l.status} />
                 {isAdmin && (
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => setForm({ ...l, paginas: l.paginas ?? "", generos: l.generos ?? [] })}
-                      style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: COLORS.primary, padding: "4px 10px", borderRadius: 6, border: `1px solid ${COLORS.border}`, background: "none" }}>
+                      style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: COLORS.primary, padding: "4px 10px", borderRadius: 6, border: `1px solid ${COLORS.border}`, background: "none", cursor: "pointer" }}>
                       <Edit2 size={12} /> Editar
                     </button>
                     <button onClick={() => setExcluindo(l)} disabled={l.status === "Emprestado"}
-                      style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: l.status === "Emprestado" ? COLORS.border : COLORS.danger, padding: "4px 10px", borderRadius: 6, border: `1px solid ${l.status === "Emprestado" ? COLORS.border : COLORS.dangerLight}`, background: "none" }}>
+                      style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: l.status === "Emprestado" ? COLORS.border : COLORS.danger, padding: "4px 10px", borderRadius: 6, border: `1px solid ${l.status === "Emprestado" ? COLORS.border : COLORS.dangerLight}`, background: "none", cursor: "pointer" }}>
                       <Trash2 size={12} /> Excluir
                     </button>
                   </div>

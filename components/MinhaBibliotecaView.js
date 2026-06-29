@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { COLORS, FONT } from "@/lib/design";
+import BuscaGoogleBooks from "@/components/BuscaGoogleBooks";
 
 const supabase = createClient();
 
@@ -32,6 +33,7 @@ function LivroModal({ livro, userId, onSave, onClose }) {
     ano: livro?.ano ?? "",
     editora: livro?.editora ?? "",
     conservacao: livro?.conservacao ?? "Bom",
+    foto: livro?.foto ?? "",
   });
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
@@ -86,6 +88,9 @@ function LivroModal({ livro, userId, onSave, onClose }) {
           <button onClick={onClose} style={btnIcon}>✕</button>
         </div>
         <div style={{ padding: "20px 24px" }}>
+          {!livro?.id && (
+            <BuscaGoogleBooks onPreencher={dados => setForm(f => ({ ...f, ...dados }))} />
+          )}
           {field("Título *", "titulo", { placeholder: "Ex: Dom Casmurro" })}
           {field("Autor", "autor", { placeholder: "Ex: Machado de Assis" })}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -95,6 +100,32 @@ function LivroModal({ livro, userId, onSave, onClose }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>{field("Editora", "editora")}</div>
             <div>{field("Conservação", "conservacao", { as: "select", options: ["Novo", "Bom", "Regular", "Desgastado"] })}</div>
+          </div>
+
+          {/* Capa */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ ...labelStyle, marginBottom: 8 }}>Capa</label>
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div style={{ width: 60, height: 84, flexShrink: 0, borderRadius: 6, border: `1px solid ${COLORS.border}`, overflow: "hidden", background: COLORS.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {form.foto
+                  ? <img src={form.foto} alt="Capa" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.currentTarget.style.display = "none"; }} />
+                  : <span style={{ fontSize: 24 }}>📖</span>}
+              </div>
+              <div style={{ flex: 1 }}>
+                <input
+                  value={form.foto}
+                  onChange={e => set("foto", e.target.value)}
+                  placeholder="URL da imagem da capa"
+                  style={{ ...inputStyle, fontSize: 13 }}
+                />
+                {form.foto && (
+                  <button onClick={() => set("foto", "")}
+                    style={{ marginTop: 6, fontSize: 12, color: COLORS.danger, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                    Remover imagem
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
           {erro && <p style={{ color: COLORS.danger, fontSize: 13, marginBottom: 12 }}>{erro}</p>}
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
@@ -476,14 +507,20 @@ function LivroCard({ livro, onEdit, onDelete }) {
       borderLeft: `4px solid ${emprestado ? COLORS.warn : COLORS.primary}`,
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: COLORS.text, fontFamily: FONT.serif,
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {livro.titulo}
-          </p>
-          {livro.autor && (
-            <p style={{ margin: "2px 0 0", fontSize: 13, color: COLORS.textLight }}>{livro.autor}</p>
+        <div style={{ display: "flex", gap: 10, flex: 1, minWidth: 0 }}>
+          {livro.foto && (
+            <img src={livro.foto} alt="Capa" style={{ width: 40, height: 56, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
+              onError={e => { e.currentTarget.style.display = "none"; }} />
           )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: COLORS.text, fontFamily: FONT.serif,
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {livro.titulo}
+            </p>
+            {livro.autor && (
+              <p style={{ margin: "2px 0 0", fontSize: 13, color: COLORS.textLight }}>{livro.autor}</p>
+            )}
+          </div>
         </div>
         <span style={{
           fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 20,

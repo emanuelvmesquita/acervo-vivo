@@ -13,10 +13,25 @@ export default function ConfigView({ configInicial }) {
   });
   const [salvando, setSalvando] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [disparando, setDisparando] = useState(false);
+  const [resultadoCron, setResultadoCron] = useState(null);
 
   function set(k, v) {
     setConfig(c => ({ ...c, [k]: v }));
     setFeedback(null);
+  }
+
+  async function disparar() {
+    setDisparando(true);
+    setResultadoCron(null);
+    try {
+      const res = await fetch("/api/notificacoes/enviar", { method: "POST" });
+      const json = await res.json();
+      setResultadoCron(json);
+    } catch (err) {
+      setResultadoCron({ error: err.message });
+    }
+    setDisparando(false);
   }
 
   async function salvar() {
@@ -109,21 +124,46 @@ export default function ConfigView({ configInicial }) {
             <CanalRow
               icon="📱"
               nome="WhatsApp (Twilio)"
-              descricao="Mensagens via API Twilio WhatsApp"
-              badge="Em breve"
+              descricao="Mensagens via API Twilio WhatsApp Business"
+              ativo={!!process.env.NEXT_PUBLIC_TWILIO_CONFIGURADO}
             />
             <CanalRow
               icon="✉️"
               nome="E-mail (Resend)"
-              descricao="E-mails transacionais via Resend"
-              badge="Em breve"
+              descricao="E-mails transacionais via Resend (fallback automático)"
+              ativo={!!process.env.NEXT_PUBLIC_RESEND_CONFIGURADO}
             />
             <CanalRow
               icon="💬"
               nome="SMS (Twilio)"
-              descricao="SMS como fallback quando WhatsApp falhar"
-              badge="Em breve"
+              descricao="SMS quando WhatsApp não for possível"
+              badge="Onda 5"
             />
+          </div>
+        </Secao>
+
+        {/* Disparo manual */}
+        <Secao titulo="Disparo Manual">
+          <div style={{ padding: "20px", background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12 }}>
+            <p style={{ margin: "0 0 16px", fontSize: 14, color: COLORS.text, lineHeight: 1.6 }}>
+              Processa todos os empréstimos com vencimento próximo ou em atraso e envia as notificações agora, sem esperar o horário agendado.
+            </p>
+            <button onClick={disparar} disabled={disparando} style={{ ...btnPrimario, background: COLORS.accent }}>
+              {disparando ? "Disparando…" : "Disparar notificações agora"}
+            </button>
+            {resultadoCron && (
+              <div style={{ marginTop: 14, padding: "12px 16px", borderRadius: 8,
+                background: resultadoCron.error ? COLORS.dangerLight : COLORS.successLight,
+                border: `1px solid ${resultadoCron.error ? COLORS.danger : COLORS.success}`,
+                fontSize: 13, color: resultadoCron.error ? COLORS.danger : COLORS.success }}>
+                {resultadoCron.error
+                  ? `Erro: ${resultadoCron.error}`
+                  : resultadoCron.msg
+                    ? resultadoCron.msg
+                    : `✓ ${resultadoCron.enviadas} enviada(s) · ${resultadoCron.puladas ?? 0} já notificada(s) hoje${resultadoCron.erros?.length ? ` · ${resultadoCron.erros.length} erro(s)` : ""}`
+                }
+              </div>
+            )}
           </div>
         </Secao>
 
@@ -180,7 +220,7 @@ function Toggle({ ativo, onChange }) {
   );
 }
 
-function CanalRow({ icon, nome, descricao, badge }) {
+function CanalRow({ icon, nome, descricao, badge, ativo }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 14, padding: "12px 0",
@@ -199,6 +239,17 @@ function CanalRow({ icon, nome, descricao, badge }) {
           background: COLORS.warnLight, color: COLORS.warn, whiteSpace: "nowrap",
         }}>
           {badge}
+        </span>
+      )}
+      {ativo !== undefined && !badge && (
+        <span style={{
+          fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20,
+          background: ativo ? COLORS.successLight : COLORS.bg,
+          color: ativo ? COLORS.success : COLORS.textLight,
+          border: `1px solid ${ativo ? COLORS.success : COLORS.border}`,
+          whiteSpace: "nowrap",
+        }}>
+          {ativo ? "Configurado" : "Pendente"}
         </span>
       )}
       <style>{`.canal-row:last-child { border-bottom: none; }`}</style>

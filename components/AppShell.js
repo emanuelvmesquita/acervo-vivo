@@ -215,7 +215,7 @@ export default function AppShell({ user, profile, children }) {
           <div style={{ width: 30 }} />
         </header>
 
-        <main style={{ flex: 1, padding: "24px 20px", maxWidth: 960, width: "100%" }}>
+        <main style={{ flex: 1, padding: "28px 24px", width: "100%", minWidth: 0 }}>
           {children}
         </main>
       </div>
@@ -224,7 +224,10 @@ export default function AppShell({ user, profile, children }) {
         @media (min-width: 768px) {
           .sidebar-desktop { display: block !important; }
           header { display: none !important; }
-          main { margin-left: 220px; }
+          main { margin-left: 220px; padding: 32px 40px; }
+        }
+        @media (min-width: 1280px) {
+          main { padding: 36px 56px; }
         }
       `}</style>
     </div>

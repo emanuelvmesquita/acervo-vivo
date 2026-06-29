@@ -1,7 +1,7 @@
 "use client";
 
 import { COLORS } from "@/lib/design";
-import { AlertTriangle, Clock, BookOpen, Users, RefreshCw, TrendingUp } from "lucide-react";
+import { AlertTriangle, Clock, BookOpen } from "lucide-react";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -155,7 +155,7 @@ export default function PainelView({ profile, isAdmin, livros, emprestimos, reno
         {/* Visão geral */}
         <section style={{ marginBottom: 24 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textLight, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>Visão geral do acervo</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
             <MetricCard label="Acervo" value={livros.length} sub="títulos" />
             <MetricCard label="Em dia" value={`${emDia.length > 0 ? Math.round((emDia.length / (emDia.length + atrasados.length)) * 100) : 100}%`} sub="empréstimos ativos" />
             <MetricCard label="Novos (7d)" value={`+${novos}`} sub="títulos adicionados" color={COLORS.primary} />
@@ -165,7 +165,7 @@ export default function PainelView({ profile, isAdmin, livros, emprestimos, reno
         {/* Empréstimos e leitores */}
         <section style={{ marginBottom: 24 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textLight, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>Empréstimos e leitores</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
             <MetricCard label="Total" value={emprestimos.length} sub="empréstimos" />
             <MetricCard label="Duração média" value={`${duracaoMedia}d`} sub="por empréstimo" />
             <MetricCard label="No prazo" value={`${taxaNoPrazo}%`} sub="devoluções" color={taxaNoPrazo >= 80 ? COLORS.success : COLORS.warn} />
@@ -175,7 +175,7 @@ export default function PainelView({ profile, isAdmin, livros, emprestimos, reno
 
         {/* Rankings */}
         {topLeitores.length > 0 && (
-          <section style={{ marginBottom: 24, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <section style={{ marginBottom: 24, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
             <div style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "16px" }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textLight, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>Top leitores</div>
               {topLeitores.map(([nome, n], i) => (

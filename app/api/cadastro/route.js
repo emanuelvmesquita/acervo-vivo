@@ -9,7 +9,14 @@ function adminClient() {
 }
 
 export async function POST(request) {
-  const { nome, email, cpf, telefone, senha } = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Corpo da requisição inválido." }, { status: 400 });
+  }
+
+  const { nome, email, cpf, telefone, senha } = body;
 
   if (!nome || !email || !cpf || !senha) {
     return NextResponse.json({ error: "Nome, e-mail, CPF e senha são obrigatórios." }, { status: 400 });
@@ -69,7 +76,7 @@ export async function POST(request) {
     .eq("id", authData.user.id);
 
   if (profErr) {
-    return NextResponse.json({ error: profErr.message }, { status: 500 });
+    return NextResponse.json({ error: `Perfil: ${profErr.message}` }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

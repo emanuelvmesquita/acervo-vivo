@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { COLORS } from "@/lib/design";
 import { BookOpen, Eye, EyeOff } from "lucide-react";
@@ -37,7 +36,6 @@ const COR_FORCA = ["#E74C3C", "#E67E22", "#F1C40F", "#2ECC71", "#27AE60"];
 const LABEL_FORCA = ["Muito fraca", "Fraca", "Razoável", "Forte", "Muito forte"];
 
 export default function CadastroPage() {
-  const router = useRouter();
   const [form, setForm] = useState({ nome: "", email: "", cpf: "", telefone: "", senha: "", confirma: "" });
   const [mostraSenha, setMostraSenha] = useState(false);
   const [mostraConfirma, setMostraConfirma] = useState(false);
@@ -73,7 +71,15 @@ export default function CadastroPage() {
         }),
       });
 
-      const json = await res.json();
+      let json = {};
+      const ct = res.headers.get("content-type") ?? "";
+      if (ct.includes("application/json")) {
+        json = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(`Resposta inesperada do servidor (${res.status}): ${text.slice(0, 120)}`);
+      }
+
       if (!res.ok) {
         setErro(json.error ?? "Erro ao criar conta.");
         setCarregando(false);
@@ -95,8 +101,8 @@ export default function CadastroPage() {
 
       // Reload completo garante que o cookie de sessão seja lido pelo proxy
       window.location.href = "/painel";
-    } catch {
-      setErro("Erro inesperado. Tente novamente.");
+    } catch (err) {
+      setErro(err?.message ?? "Erro inesperado. Tente novamente.");
       setCarregando(false);
     }
   }

@@ -235,9 +235,36 @@ export default function PainelView({ profile, isAdmin, livros, emprestimos, reno
       <p style={{ fontSize: 13, color: COLORS.textLight, marginBottom: 24 }}>Meus empréstimos ativos</p>
 
       {meusEmprestimos.length === 0 ? (
-        <div style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "24px 20px", textAlign: "center" }}>
-          <BookOpen size={32} color={COLORS.border} style={{ marginBottom: 10 }} />
-          <p style={{ fontSize: 14, color: COLORS.textLight }}>Você não tem empréstimos ativos.</p>
+        <div style={{
+          background: COLORS.bgCard,
+          border: `1px solid ${COLORS.border}`,
+          borderRadius: 12,
+          padding: "40px 24px",
+          textAlign: "center",
+        }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: "50%",
+            background: `${COLORS.primary}15`,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            marginBottom: 18,
+          }}>
+            <BookOpen size={34} color={COLORS.primary} />
+          </div>
+          <p style={{ margin: "0 0 6px", fontWeight: 700, fontSize: 16, color: COLORS.text, fontFamily: "'Georgia', serif" }}>
+            Nenhum empréstimo ativo
+          </p>
+          <p style={{ margin: "0 0 24px", fontSize: 14, color: COLORS.textLight, lineHeight: 1.6, maxWidth: 320, marginLeft: "auto", marginRight: "auto" }}>
+            Explore o acervo da biblioteca e retire um livro para começar a sua leitura.
+          </p>
+          <a href="/acervo" style={{
+            display: "inline-block",
+            background: COLORS.primary, color: "#fff",
+            padding: "11px 28px", borderRadius: 8,
+            fontWeight: 600, fontSize: 14, textDecoration: "none",
+            transition: "opacity 0.15s",
+          }}>
+            Ver acervo
+          </a>
         </div>
       ) : (
         meusEmprestimos.map(e => {

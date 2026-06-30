@@ -25,20 +25,23 @@ function fmtData(s) {
   return `${d}/${m}/${y}`;
 }
 
-function MeuStatusBadge({ tipo }) {
+function BotaoEmprestimoCard({ tipo, fullWidth = true }) {
   const cfg = {
-    emprestado: { bg: COLORS.bg, fg: COLORS.textLight, icon: CheckCircle2, texto: "Emprestado para você" },
+    emprestado: { bg: COLORS.bg, fg: COLORS.textLight, icon: CheckCircle2, texto: "Emprestado" },
     pendente: { bg: COLORS.warnLight, fg: COLORS.warn, icon: Clock, texto: "Em confirmação" },
-    espera: { bg: COLORS.bg, fg: COLORS.textLight, icon: Users, texto: "Na lista de espera" },
+    disponivel: { bg: COLORS.primary, fg: "#fff", icon: BookOpen, texto: "Empréstimo" },
+    espera: { bg: COLORS.accent, fg: "#fff", icon: Users, texto: "Lista de espera" },
   }[tipo];
   if (!cfg) return null;
   const Icon = cfg.icon;
   return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
-      padding: "2px 9px", borderRadius: 20, fontSize: 10.5, fontWeight: 600,
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "center", gap: 6, whiteSpace: "nowrap",
+      width: fullWidth ? "100%" : "auto",
+      padding: fullWidth ? "10px 0" : "8px 16px",
+      borderRadius: 8, fontSize: 13, fontWeight: 700,
       background: cfg.bg, color: cfg.fg,
-    }}><Icon size={11} /> {cfg.texto}</span>
+    }}><Icon size={15} /> {cfg.texto}</div>
   );
 }
 
@@ -554,8 +557,8 @@ export default function AcervoView({
     if (isAdmin) return null;
     if (meuEmprestimoAtivoPorTitulo.get(tituloId)) return "emprestado";
     if (minhasSolicitacoesPendentesPorTitulo.get(tituloId)) return "pendente";
-    if (disponiveis === 0 && minhaListaEsperaPorTitulo.get(tituloId)) return "espera";
-    return null;
+    if (disponiveis > 0) return "disponivel";
+    return "espera";
   }
 
   const titulosFiltrados = useMemo(() => {
@@ -894,7 +897,7 @@ export default function AcervoView({
                     </div>
                   )}
                   {meuStatus && (
-                    <div style={{ marginTop: 2 }}><MeuStatusBadge tipo={meuStatus} /></div>
+                    <div style={{ marginTop: "auto", paddingTop: 10 }}><BotaoEmprestimoCard tipo={meuStatus} /></div>
                   )}
                   {isAdmin && (
                     <div style={{ display: "flex", gap: 6, marginTop: "auto", paddingTop: 10, borderTop: `1px solid ${COLORS.border}` }}>
@@ -943,7 +946,7 @@ export default function AcervoView({
                 </div>
                 <div className="acv-lista-meta">
                   <DisponibilidadeBadge disponiveis={stats.disponiveis} total={stats.total} />
-                  {meuStatus && <MeuStatusBadge tipo={meuStatus} />}
+                  {meuStatus && <BotaoEmprestimoCard tipo={meuStatus} fullWidth={false} />}
                   {isAdmin && (
                     <div style={{ display: "flex", gap: 6 }}>
                       <button onClick={e => { e.stopPropagation(); abrirEditarTitulo(t); }}

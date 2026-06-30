@@ -31,7 +31,7 @@ function MetricCard({ label, value, sub, color }) {
   );
 }
 
-export default function PainelView({ profile, isAdmin, livros, emprestimos, renovacoes, totalUsuarios, leituras }) {
+export default function PainelView({ profile, isAdmin, userId, titulos, emprestimos, renovacoes, totalUsuarios, leituras }) {
   const today = todayISO();
 
   if (isAdmin) {
@@ -44,7 +44,7 @@ export default function PainelView({ profile, isAdmin, livros, emprestimos, reno
     const taxaNoPrazo = devolvidos.length > 0 ? Math.round((noPrazo / devolvidos.length) * 100) : 0;
 
     const sete = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-    const novos = livros.filter(l => l.created_at?.slice(0, 10) >= sete).length;
+    const novos = titulos.filter(t => t.created_at?.slice(0, 10) >= sete).length;
 
     const duracaoMedia = devolvidos.length > 0
       ? Math.round(devolvidos.reduce((s, e) => s + diffDays(e.data_emprestimo, e.data_devolucao_efetiva), 0) / devolvidos.length)
@@ -59,15 +59,19 @@ export default function PainelView({ profile, isAdmin, livros, emprestimos, reno
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
 
-    // Top livros
-    const contagemLivro = {};
+    // Top livros (agrupado por título via exemplares)
+    const contagemTitulo = {};
+    const nomeTitulo = {};
     emprestimos.forEach(e => {
-      if (e.livro_id) contagemLivro[e.livro_id] = (contagemLivro[e.livro_id] || 0) + 1;
+      const tId = e.exemplares?.titulo_id;
+      if (!tId) return;
+      contagemTitulo[tId] = (contagemTitulo[tId] || 0) + 1;
+      nomeTitulo[tId] = e.exemplares?.titulos?.titulo ?? "—";
     });
-    const topLivroIds = Object.entries(contagemLivro)
+    const topLivroIds = Object.entries(contagemTitulo)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
-      .map(([id, n]) => ({ id, n, titulo: livros.find(l => l.id === id)?.titulo ?? "—" }));
+      .map(([id, n]) => ({ id, n, titulo: nomeTitulo[id] ?? "—" }));
 
     const semPendencias = atrasados.length === 0 && renovacoes.length === 0;
 
@@ -156,7 +160,7 @@ export default function PainelView({ profile, isAdmin, livros, emprestimos, reno
         <section style={{ marginBottom: 24 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textLight, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>Visão geral do acervo</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12 }}>
-            <MetricCard label="Acervo" value={livros.length} sub="títulos" />
+            <MetricCard label="Acervo" value={titulos.length} sub="títulos" />
             <MetricCard label="Em dia" value={`${emDia.length > 0 ? Math.round((emDia.length / (emDia.length + atrasados.length)) * 100) : 100}%`} sub="empréstimos ativos" />
             <MetricCard label="Novos (7d)" value={`+${novos}`} sub="títulos adicionados" color={COLORS.primary} />
           </div>
@@ -205,7 +209,8 @@ export default function PainelView({ profile, isAdmin, livros, emprestimos, reno
   // Leitor view
   const meuNome = profile?.nome?.split(" ")[0] ?? "";
   const meusEmprestimos = emprestimos.filter(e =>
-    e.locatario?.toLowerCase().includes(meuNome.toLowerCase()) && e.status !== "Devolvido"
+    (e.usuario_id ? e.usuario_id === userId : e.locatario?.toLowerCase().includes(meuNome.toLowerCase()))
+    && e.status !== "Devolvido"
   );
 
   const proximo = meusEmprestimos
@@ -279,7 +284,7 @@ export default function PainelView({ profile, isAdmin, livros, emprestimos, reno
               padding: "12px 16px",
               marginBottom: 10,
             }}>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{livros.find(l => l.id === e.livro_id)?.titulo ?? "Livro"}</div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{e.exemplares?.titulos?.titulo ?? "Livro"}</div>
               <div style={{ fontSize: 12, color: dias < 0 ? COLORS.danger : COLORS.textLight, marginTop: 4 }}>
                 {dias < 0 ? `Atrasado há ${Math.abs(dias)} dia${Math.abs(dias) > 1 ? "s" : ""}` : dias === 0 ? "Vence hoje" : `Vence em ${dias} dia${dias > 1 ? "s" : ""} — ${new Date(e.data_devolucao + "T00:00:00").toLocaleDateString("pt-BR")}`}
               </div>
@@ -293,8 +298,8 @@ export default function PainelView({ profile, isAdmin, livros, emprestimos, reno
           <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textLight, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>Continue lendo</div>
           {leituras.filter(l => l.progresso > 0 && l.progresso < 100).slice(0, 3).map(l => (
             <div key={l.id} style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "12px 16px", marginBottom: 8 }}>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{l.livros?.titulo}</div>
-              <div style={{ fontSize: 12, color: COLORS.textLight, marginBottom: 8 }}>{l.livros?.autor}</div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{l.titulos?.titulo}</div>
+              <div style={{ fontSize: 12, color: COLORS.textLight, marginBottom: 8 }}>{l.titulos?.autor}</div>
               <div style={{ background: COLORS.border, borderRadius: 4, height: 6, overflow: "hidden" }}>
                 <div style={{ background: COLORS.primary, width: `${l.progresso}%`, height: "100%", borderRadius: 4 }} />
               </div>

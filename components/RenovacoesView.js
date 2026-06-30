@@ -62,7 +62,7 @@ function SolicitarModal({ emprestimosAtivos, nomeLeitor, onSave, onClose, salvan
             style={{ width: "100%", padding: "9px 12px", border: `1.5px solid ${COLORS.border}`, borderRadius: 8, fontSize: 14, background: COLORS.bg, outline: "none" }}>
             <option value="">Selecione um empréstimo ativo…</option>
             {emprestimosAtivos.map(e => (
-              <option key={e.id} value={e.id}>{e.livros?.titulo} — vence {fmtDate(e.data_devolucao)}</option>
+              <option key={e.id} value={e.id}>{e.exemplares?.titulos?.titulo} — vence {fmtDate(e.data_devolucao)}</option>
             ))}
           </select>
           {emprestimosAtivos.length === 0 && <div style={{ fontSize: 12, color: COLORS.textLight, marginTop: 4 }}>Você não tem empréstimos ativos no momento.</div>}
@@ -95,7 +95,7 @@ function SolicitarModal({ emprestimosAtivos, nomeLeitor, onSave, onClose, salvan
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{ padding: "9px 20px", borderRadius: 8, fontSize: 14, border: `1.5px solid ${COLORS.border}`, color: COLORS.text }}>Cancelar</button>
-          <button onClick={() => onSave({ emprestimo_id: empId, livro_id: emp?.livro_id, locatario: nomeLeitor, nova_data: novaData, justificativa })}
+          <button onClick={() => onSave({ emprestimo_id: empId, titulo_id: emp?.exemplares?.titulo_id, locatario: nomeLeitor, nova_data: novaData, justificativa })}
             disabled={!valido || salvando}
             style={{ padding: "9px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, background: valido ? COLORS.primary : COLORS.border, color: valido ? "#fff" : COLORS.textLight }}>
             {salvando ? "Enviando…" : "Enviar solicitação"}
@@ -120,7 +120,7 @@ function AvaliarModal({ renovacao, onAprovar, onNegar, onClose, salvando }) {
         </div>
 
         <div style={{ background: COLORS.bg, borderRadius: 8, padding: "12px 16px", marginBottom: 16, fontSize: 13 }}>
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>{renovacao.emprestimos?.livros?.titulo}</div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>{renovacao.emprestimos?.exemplares?.titulos?.titulo}</div>
           <div style={{ color: COLORS.textLight }}>Locatário: {renovacao.locatario}</div>
           <div style={{ color: COLORS.textLight }}>Vencimento atual: {fmtDate(renovacao.emprestimos?.data_devolucao)}</div>
           <div style={{ color: COLORS.textLight }}>Nova data solicitada: {fmtDate(renovacao.nova_data)}</div>
@@ -162,7 +162,7 @@ function RenovacaoCard({ r, isAdmin, onAvaliar }) {
     <div style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderLeft: `4px solid ${STATUS_CFG[r.status]?.color ?? COLORS.border}`, borderRadius: 10, overflow: "hidden" }}>
       <div style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{r.emprestimos?.livros?.titulo ?? "Livro removido"}</div>
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{r.emprestimos?.exemplares?.titulos?.titulo ?? "Livro removido"}</div>
           <div style={{ fontSize: 12, color: COLORS.textLight }}>{r.locatario} · solicitada em {fmtDatetime(r.data_solicitacao)}</div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
@@ -215,7 +215,7 @@ export default function RenovacoesView({ renovacoesIniciais, isAdmin, emprestimo
     const { data, error } = await supabase
       .from("renovacoes")
       .insert({ ...dados, status: "Solicitada" })
-      .select("*, emprestimos(id, data_devolucao, livros(titulo, autor))")
+      .select("*, emprestimos(id, data_devolucao, exemplares(titulos(titulo, autor)))")
       .single();
     if (!error) {
       setRenovacoes(rs => [data, ...rs]);
@@ -232,7 +232,7 @@ export default function RenovacoesView({ renovacoesIniciais, isAdmin, emprestimo
       .from("renovacoes")
       .update({ status: "Aprovada", nova_data: novaData, observacao_admin: obs || null })
       .eq("id", avaliando.id)
-      .select("*, emprestimos(id, data_devolucao, livros(titulo, autor))")
+      .select("*, emprestimos(id, data_devolucao, exemplares(titulos(titulo, autor)))")
       .single();
 
     if (!error) {
@@ -252,7 +252,7 @@ export default function RenovacoesView({ renovacoesIniciais, isAdmin, emprestimo
       .from("renovacoes")
       .update({ status: "Negada", observacao_admin: obs || null })
       .eq("id", avaliando.id)
-      .select("*, emprestimos(id, data_devolucao, livros(titulo, autor))")
+      .select("*, emprestimos(id, data_devolucao, exemplares(titulos(titulo, autor)))")
       .single();
 
     if (!error) {

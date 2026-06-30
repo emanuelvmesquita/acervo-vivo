@@ -18,7 +18,7 @@ export default async function RenovacoesPage() {
   // Admin vê todas; leitor vê só as suas (por nome)
   const query = supabase
     .from("renovacoes")
-    .select("*, emprestimos(id, data_devolucao, livros(titulo, autor))")
+    .select("*, emprestimos(id, data_devolucao, exemplares(titulos(titulo, autor)))")
     .order("data_solicitacao", { ascending: false });
 
   if (!isAdmin) query.eq("locatario", profile?.nome ?? "");
@@ -30,7 +30,7 @@ export default async function RenovacoesPage() {
   if (!isAdmin) {
     const { data } = await supabase
       .from("emprestimos")
-      .select("id, locatario, data_devolucao, livros(titulo)")
+      .select("id, locatario, data_devolucao, exemplares(titulo_id, titulos(titulo))")
       .eq("status", "Ativo")
       .ilike("locatario", `%${profile?.nome?.split(" ")[0] ?? ""}%`);
     emprestimosAtivos = data ?? [];

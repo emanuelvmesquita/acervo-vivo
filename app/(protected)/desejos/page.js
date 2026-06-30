@@ -9,7 +9,7 @@ export default async function DesejosPage() {
 
   const { data: desejos } = await supabase
     .from("desejos")
-    .select("*, livros(titulo, autor, status)")
+    .select("*, titulos(titulo, autor, exemplares(status))")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 

@@ -11,11 +11,11 @@ function fmtData(s) {
   return d.toLocaleDateString("pt-BR");
 }
 
-function AnotacaoModal({ anotacao, livros, userId, onSave, onClose }) {
+function AnotacaoModal({ anotacao, titulos, userId, onSave, onClose }) {
   const [form, setForm] = useState({
     titulo: anotacao?.titulo ?? "",
     texto: anotacao?.texto ?? "",
-    livro_id: anotacao?.livro_id ?? "",
+    titulo_id: anotacao?.titulo_id ?? "",
   });
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
@@ -29,17 +29,17 @@ function AnotacaoModal({ anotacao, livros, userId, onSave, onClose }) {
     const payload = {
       titulo: form.titulo || null,
       texto: form.texto,
-      livro_id: form.livro_id || null,
+      titulo_id: form.titulo_id || null,
       user_id: userId,
       updated_at: new Date().toISOString(),
     };
     let data, error;
     if (anotacao?.id) {
       ({ data, error } = await supabase
-        .from("anotacoes").update(payload).eq("id", anotacao.id).select("*, livros(titulo, autor)").single());
+        .from("anotacoes").update(payload).eq("id", anotacao.id).select("*, titulos(titulo, autor)").single());
     } else {
       ({ data, error } = await supabase
-        .from("anotacoes").insert(payload).select("*, livros(titulo, autor)").single());
+        .from("anotacoes").insert(payload).select("*, titulos(titulo, autor)").single());
     }
     setLoading(false);
     if (error) { setErro(error.message); return; }
@@ -66,9 +66,9 @@ function AnotacaoModal({ anotacao, livros, userId, onSave, onClose }) {
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>Livro relacionado (opcional)</label>
-            <select value={form.livro_id} onChange={e => set("livro_id", e.target.value)} style={inputStyle}>
+            <select value={form.titulo_id} onChange={e => set("titulo_id", e.target.value)} style={inputStyle}>
               <option value="">— Nenhum —</option>
-              {livros.map(l => <option key={l.id} value={l.id}>{l.titulo}</option>)}
+              {titulos.map(t => <option key={t.id} value={t.id}>{t.titulo}</option>)}
             </select>
           </div>
           <div style={{ marginBottom: 14 }}>
@@ -90,7 +90,7 @@ function AnotacaoModal({ anotacao, livros, userId, onSave, onClose }) {
   );
 }
 
-export default function AnotacoesView({ anotacoesIniciais, livros, userId }) {
+export default function AnotacoesView({ anotacoesIniciais, titulos, userId }) {
   const [anotacoes, setAnotacoes] = useState(anotacoesIniciais);
   const [modal, setModal] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -110,19 +110,19 @@ export default function AnotacoesView({ anotacoesIniciais, livros, userId }) {
   }
 
   const livrosComAnotacoes = useMemo(() => {
-    const ids = new Set(anotacoes.map(a => a.livro_id).filter(Boolean));
-    return [{ id: "", titulo: "Todas" }, ...livros.filter(l => ids.has(l.id))];
-  }, [anotacoes, livros]);
+    const ids = new Set(anotacoes.map(a => a.titulo_id).filter(Boolean));
+    return [{ id: "", titulo: "Todas" }, ...titulos.filter(t => ids.has(t.id))];
+  }, [anotacoes, titulos]);
 
   const lista = useMemo(() => {
     let l = anotacoes;
-    if (filtroLivro) l = l.filter(a => a.livro_id === filtroLivro);
+    if (filtroLivro) l = l.filter(a => a.titulo_id === filtroLivro);
     if (busca.trim()) {
       const q = busca.toLowerCase();
       l = l.filter(a =>
         a.titulo?.toLowerCase().includes(q) ||
         a.texto.toLowerCase().includes(q) ||
-        a.livros?.titulo?.toLowerCase().includes(q)
+        a.titulos?.titulo?.toLowerCase().includes(q)
       );
     }
     return l;
@@ -171,7 +171,7 @@ export default function AnotacoesView({ anotacoesIniciais, livros, userId }) {
       {modal && (
         <AnotacaoModal
           anotacao={modal === "nova" ? null : modal}
-          livros={livros}
+          titulos={titulos}
           userId={userId}
           onSave={onSave}
           onClose={() => setModal(null)}
@@ -210,9 +210,9 @@ function AnotacaoCard({ anotacao, onEdit, onDelete }) {
           {anotacao.titulo}
         </p>
       )}
-      {anotacao.livros && (
+      {anotacao.titulos && (
         <p style={{ margin: 0, fontSize: 12, color: COLORS.primary, fontWeight: 600 }}>
-          📖 {anotacao.livros.titulo}
+          📖 {anotacao.titulos.titulo}
         </p>
       )}
       <p style={{ margin: 0, fontSize: 14, color: COLORS.text, lineHeight: 1.6,

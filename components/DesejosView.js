@@ -24,10 +24,10 @@ function DesejoModal({ desejo, userId, onSave, onClose }) {
     let data, error;
     if (desejo?.id) {
       ({ data, error } = await supabase.from("desejos").update(payload).eq("id", desejo.id)
-        .select("*, livros(titulo, autor, status)").single());
+        .select("*, titulos(titulo, autor, exemplares(status))").single());
     } else {
       ({ data, error } = await supabase.from("desejos").insert(payload)
-        .select("*, livros(titulo, autor, status)").single());
+        .select("*, titulos(titulo, autor, exemplares(status))").single());
     }
     setLoading(false);
     if (error) { setErro(error.message); return; }
@@ -97,7 +97,7 @@ export default function DesejosView({ desejosIniciais, userId }) {
     );
   }, [desejos, busca]);
 
-  const disponiveis = desejos.filter(d => d.livros?.status === "Disponível").length;
+  const disponiveis = desejos.filter(d => d.titulos?.exemplares?.some(e => e.status === "Disponível")).length;
 
   return (
     <div>
@@ -165,8 +165,8 @@ export default function DesejosView({ desejosIniciais, userId }) {
 }
 
 function DesejoCard({ desejo, onEdit, onDelete }) {
-  const noAcervo = !!desejo.livros;
-  const disponivel = desejo.livros?.status === "Disponível";
+  const noAcervo = !!desejo.titulos;
+  const disponivel = desejo.titulos?.exemplares?.some(e => e.status === "Disponível");
 
   return (
     <div style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12,

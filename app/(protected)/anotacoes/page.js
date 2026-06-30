@@ -7,14 +7,14 @@ export default async function AnotacoesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [{ data: anotacoes }, { data: livros }] = await Promise.all([
+  const [{ data: anotacoes }, { data: titulos }] = await Promise.all([
     supabase
       .from("anotacoes")
-      .select("*, livros(titulo, autor)")
+      .select("*, titulos(titulo, autor)")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false }),
     supabase
-      .from("livros")
+      .from("titulos")
       .select("id, titulo, autor")
       .order("titulo"),
   ]);
@@ -22,7 +22,7 @@ export default async function AnotacoesPage() {
   return (
     <AnotacoesView
       anotacoesIniciais={anotacoes ?? []}
-      livros={livros ?? []}
+      titulos={titulos ?? []}
       userId={user.id}
     />
   );

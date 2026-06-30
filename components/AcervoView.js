@@ -25,6 +25,23 @@ function fmtData(s) {
   return `${d}/${m}/${y}`;
 }
 
+function MeuStatusBadge({ tipo }) {
+  const cfg = {
+    emprestado: { bg: COLORS.bg, fg: COLORS.textLight, icon: CheckCircle2, texto: "Emprestado para você" },
+    pendente: { bg: COLORS.warnLight, fg: COLORS.warn, icon: Clock, texto: "Em confirmação" },
+    espera: { bg: COLORS.bg, fg: COLORS.textLight, icon: Users, texto: "Na lista de espera" },
+  }[tipo];
+  if (!cfg) return null;
+  const Icon = cfg.icon;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+      padding: "2px 9px", borderRadius: 20, fontSize: 10.5, fontWeight: 600,
+      background: cfg.bg, color: cfg.fg,
+    }}><Icon size={11} /> {cfg.texto}</span>
+  );
+}
+
 function DisponibilidadeBadge({ disponiveis, total }) {
   const ok = disponiveis > 0;
   return (
@@ -533,6 +550,14 @@ export default function AcervoView({
     return map;
   }, [exemplares, meusEmprestimosAtivos]);
 
+  function meuStatusTitulo(tituloId, disponiveis) {
+    if (isAdmin) return null;
+    if (meuEmprestimoAtivoPorTitulo.get(tituloId)) return "emprestado";
+    if (minhasSolicitacoesPendentesPorTitulo.get(tituloId)) return "pendente";
+    if (disponiveis === 0 && minhaListaEsperaPorTitulo.get(tituloId)) return "espera";
+    return null;
+  }
+
   const titulosFiltrados = useMemo(() => {
     return titulos.filter(t => {
       const q = busca.toLowerCase();
@@ -837,6 +862,7 @@ export default function AcervoView({
         <div className="acv-grade">
           {titulosFiltrados.map(t => {
             const stats = statsPorTitulo.get(t.id) ?? { disponiveis: 0, total: 0 };
+            const meuStatus = meuStatusTitulo(t.id, stats.disponiveis);
             return (
               <div key={t.id} onClick={() => setDetalheTituloId(t.id)} style={{ cursor: "pointer", background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
                 <div style={{ position: "relative", width: "100%", aspectRatio: "2/3", background: `linear-gradient(135deg, ${COLORS.primaryDark} 0%, ${COLORS.primary} 100%)`, flexShrink: 0, overflow: "hidden" }}>
@@ -867,6 +893,9 @@ export default function AcervoView({
                       {t.generos.length > 2 && <span style={{ fontSize: 10, color: COLORS.textLight }}>+{t.generos.length - 2}</span>}
                     </div>
                   )}
+                  {meuStatus && (
+                    <div style={{ marginTop: 2 }}><MeuStatusBadge tipo={meuStatus} /></div>
+                  )}
                   {isAdmin && (
                     <div style={{ display: "flex", gap: 6, marginTop: "auto", paddingTop: 10, borderTop: `1px solid ${COLORS.border}` }}>
                       <button onClick={e => { e.stopPropagation(); abrirEditarTitulo(t); }}
@@ -889,6 +918,7 @@ export default function AcervoView({
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {titulosFiltrados.map(t => {
             const stats = statsPorTitulo.get(t.id) ?? { disponiveis: 0, total: 0 };
+            const meuStatus = meuStatusTitulo(t.id, stats.disponiveis);
             return (
               <div key={t.id} onClick={() => setDetalheTituloId(t.id)} className="acv-lista-row" style={{ cursor: "pointer", background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "12px 16px" }}>
                 <div style={{ width: 48, height: 72, flexShrink: 0, borderRadius: 5, overflow: "hidden", background: `linear-gradient(135deg, ${COLORS.primaryDark}, ${COLORS.primary})`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
@@ -913,6 +943,7 @@ export default function AcervoView({
                 </div>
                 <div className="acv-lista-meta">
                   <DisponibilidadeBadge disponiveis={stats.disponiveis} total={stats.total} />
+                  {meuStatus && <MeuStatusBadge tipo={meuStatus} />}
                   {isAdmin && (
                     <div style={{ display: "flex", gap: 6 }}>
                       <button onClick={e => { e.stopPropagation(); abrirEditarTitulo(t); }}

@@ -62,16 +62,16 @@ function SugestaoCard({ sugestao, votos, votei, onVotar, isAdmin, onAtualizar })
         </button>
       </div>
       {(sugestao.prioridade || isAdmin) && (
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
           {isAdmin ? (
             <>
               <select value={sugestao.prioridade ?? ""} onChange={e => onAtualizar(sugestao, { prioridade: e.target.value || null })}
-                style={{ ...selectMiniStyle, color: sugestao.prioridade ? COR_PRIORIDADE[sugestao.prioridade] : COLORS.textLight }}>
+                style={{ ...selectMiniStyle, flex: "1 1 90px", minWidth: 0, color: sugestao.prioridade ? COR_PRIORIDADE[sugestao.prioridade] : COLORS.textLight }}>
                 <option value="">Prioridade</option>
                 {PRIORIDADES.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
               <select value={sugestao.status_sugestao} onChange={e => onAtualizar(sugestao, { status_sugestao: e.target.value })}
-                style={selectMiniStyle}>
+                style={{ ...selectMiniStyle, flex: "1 1 90px", minWidth: 0 }}>
                 {COLUNAS_SUGESTAO.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </>
@@ -495,5 +495,6 @@ const btnPrimario = { background: COLORS.primary, color: "#fff", border: "none",
 const btnSecundario = { background: "#fff", color: COLORS.text, border: `1px solid ${COLORS.border}`,
   padding: "8px 16px", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: FONT.sans };
 const btnIcon = { background: "none", border: "none", cursor: "pointer", fontSize: 18, color: COLORS.textLight, padding: "4px 8px" };
-const selectMiniStyle = { border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: "3px 6px",
-  fontSize: 11, fontWeight: 600, fontFamily: FONT.sans, background: "#fff", cursor: "pointer", outline: "none" };
+const selectMiniStyle = { border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: "3px 4px",
+  fontSize: 11, fontWeight: 600, fontFamily: FONT.sans, background: "#fff", cursor: "pointer", outline: "none",
+  boxSizing: "border-box", maxWidth: "100%" };

@@ -468,12 +468,14 @@ export default function AcervoView({
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [toast, setToast] = useState("");
+  const [toastTipo, setToastTipo] = useState("ok");
 
   const supabase = createClient();
 
-  function showToast(msg) {
+  function showToast(msg, tipo = "ok") {
     setToast(msg);
-    setTimeout(() => setToast(""), 3000);
+    setToastTipo(tipo);
+    setTimeout(() => setToast(""), tipo === "erro" ? 5000 : 3000);
   }
 
   const statsPorTitulo = useMemo(() => {
@@ -544,23 +546,37 @@ export default function AcervoView({
 
     if (modoNovo) {
       const { data: novoTitulo, error } = await supabase.from("titulos").insert(dados).select().single();
-      if (!error) {
-        const { data: novoExemplar, error: errExemplar } = await supabase
-          .from("exemplares")
-          .insert({ ...formExemplar, titulo_id: novoTitulo.id, status: "Disponível" })
-          .select().single();
-        if (!errExemplar) {
-          setTitulos(ts => [...ts, novoTitulo]);
-          setExemplares(es => [...es, novoExemplar]);
-          showToast("Livro adicionado.");
-        }
+      if (error) {
+        console.error(error);
+        showToast(`Erro ao adicionar livro: ${error.message}`, "erro");
+        setSalvando(false);
+        return;
       }
+      const { data: novoExemplar, error: errExemplar } = await supabase
+        .from("exemplares")
+        .insert({ ...formExemplar, titulo_id: novoTitulo.id, status: "Disponível" })
+        .select().single();
+      if (errExemplar) {
+        console.error(errExemplar);
+        setTitulos(ts => [...ts, novoTitulo]);
+        showToast(`Livro criado, mas falhou ao adicionar o exemplar: ${errExemplar.message}`, "erro");
+        setSalvando(false);
+        setForm(null);
+        return;
+      }
+      setTitulos(ts => [...ts, novoTitulo]);
+      setExemplares(es => [...es, novoExemplar]);
+      showToast("Livro adicionado.");
     } else {
       const { data, error } = await supabase.from("titulos").update(dados).eq("id", form.id).select().single();
-      if (!error) {
-        setTitulos(ts => ts.map(t => t.id === form.id ? data : t));
-        showToast("Livro atualizado.");
+      if (error) {
+        console.error(error);
+        showToast(`Erro ao salvar livro: ${error.message}`, "erro");
+        setSalvando(false);
+        return;
       }
+      setTitulos(ts => ts.map(t => t.id === form.id ? data : t));
+      showToast("Livro atualizado.");
     }
     setSalvando(false);
     setForm(null);
@@ -568,11 +584,14 @@ export default function AcervoView({
 
   async function excluirTitulo(id) {
     const { error } = await supabase.from("titulos").delete().eq("id", id);
-    if (!error) {
-      setTitulos(ts => ts.filter(t => t.id !== id));
-      setExemplares(es => es.filter(e => e.titulo_id !== id));
-      showToast("Livro excluído.");
+    if (error) {
+      console.error(error);
+      showToast(`Erro ao excluir livro: ${error.message}`, "erro");
+      return;
     }
+    setTitulos(ts => ts.filter(t => t.id !== id));
+    setExemplares(es => es.filter(e => e.titulo_id !== id));
+    showToast("Livro excluído.");
     setExcluindoTitulo(null);
   }
 
@@ -593,19 +612,27 @@ export default function AcervoView({
         .from("exemplares")
         .insert({ tombo: exemplar.tombo, local: exemplar.local, conservacao: exemplar.conservacao, titulo_id: tituloId, status: "Disponível" })
         .select().single();
-      if (!error) {
-        setExemplares(es => [...es, data]);
-        showToast("Exemplar adicionado.");
+      if (error) {
+        console.error(error);
+        showToast(`Erro ao adicionar exemplar: ${error.message}`, "erro");
+        setSalvando(false);
+        return;
       }
+      setExemplares(es => [...es, data]);
+      showToast("Exemplar adicionado.");
     } else {
       const { data, error } = await supabase
         .from("exemplares")
         .update({ tombo: exemplar.tombo, local: exemplar.local, conservacao: exemplar.conservacao })
         .eq("id", exemplar.id).select().single();
-      if (!error) {
-        setExemplares(es => es.map(e => e.id === exemplar.id ? data : e));
-        showToast("Exemplar atualizado.");
+      if (error) {
+        console.error(error);
+        showToast(`Erro ao salvar exemplar: ${error.message}`, "erro");
+        setSalvando(false);
+        return;
       }
+      setExemplares(es => es.map(e => e.id === exemplar.id ? data : e));
+      showToast("Exemplar atualizado.");
     }
     setSalvando(false);
     setExemplarForm(null);
@@ -613,10 +640,13 @@ export default function AcervoView({
 
   async function excluirExemplar(exemplar) {
     const { error } = await supabase.from("exemplares").delete().eq("id", exemplar.id);
-    if (!error) {
-      setExemplares(es => es.filter(e => e.id !== exemplar.id));
-      showToast("Exemplar excluído.");
+    if (error) {
+      console.error(error);
+      showToast(`Erro ao excluir exemplar: ${error.message}`, "erro");
+      return;
     }
+    setExemplares(es => es.filter(e => e.id !== exemplar.id));
+    showToast("Exemplar excluído.");
     setExcluindoExemplar(null);
   }
 
@@ -627,10 +657,14 @@ export default function AcervoView({
       .from("exemplares")
       .update({ status: "Indisponível", motivo_indisponivel: motivo || null })
       .eq("id", indisponivelTarget.id).select().single();
-    if (!error) {
-      setExemplares(es => es.map(e => e.id === data.id ? data : e));
-      showToast("Exemplar marcado como indisponível.");
+    if (error) {
+      console.error(error);
+      showToast(`Erro ao marcar indisponível: ${error.message}`, "erro");
+      setSalvando(false);
+      return;
     }
+    setExemplares(es => es.map(e => e.id === data.id ? data : e));
+    showToast("Exemplar marcado como indisponível.");
     setSalvando(false);
     setIndisponivelTarget(null);
   }
@@ -640,10 +674,13 @@ export default function AcervoView({
       .from("exemplares")
       .update({ status: "Disponível", motivo_indisponivel: null })
       .eq("id", exemplar.id).select().single();
-    if (!error) {
-      setExemplares(es => es.map(e => e.id === data.id ? data : e));
-      showToast("Exemplar marcado como disponível.");
+    if (error) {
+      console.error(error);
+      showToast(`Erro ao marcar disponível: ${error.message}`, "erro");
+      return;
     }
+    setExemplares(es => es.map(e => e.id === data.id ? data : e));
+    showToast("Exemplar marcado como disponível.");
   }
 
   async function solicitarEmprestimo(dataDesejada) {
@@ -653,20 +690,27 @@ export default function AcervoView({
       .from("solicitacoes_emprestimo")
       .insert({ titulo_id: solicitarTarget.id, usuario_id: userId, data_desejada: dataDesejada, status: "Pendente" })
       .select().single();
-    if (!error) {
-      setMinhasSolicitacoes(ss => [...ss, data]);
-      showToast("Solicitação enviada. Aguarde a confirmação da administração.");
+    if (error) {
+      console.error(error);
+      showToast(`Erro ao solicitar empréstimo: ${error.message}`, "erro");
+      setEnviando(false);
+      return;
     }
+    setMinhasSolicitacoes(ss => [...ss, data]);
+    showToast("Solicitação enviada. Aguarde a confirmação da administração.");
     setEnviando(false);
     setSolicitarTarget(null);
   }
 
   async function cancelarSolicitacao(id) {
     const { error } = await supabase.from("solicitacoes_emprestimo").delete().eq("id", id);
-    if (!error) {
-      setMinhasSolicitacoes(ss => ss.filter(s => s.id !== id));
-      showToast("Solicitação cancelada.");
+    if (error) {
+      console.error(error);
+      showToast(`Erro ao cancelar solicitação: ${error.message}`, "erro");
+      return;
     }
+    setMinhasSolicitacoes(ss => ss.filter(s => s.id !== id));
+    showToast("Solicitação cancelada.");
   }
 
   async function entrarListaEspera(tituloId) {
@@ -674,18 +718,24 @@ export default function AcervoView({
       .from("lista_espera")
       .insert({ titulo_id: tituloId, usuario_id: userId })
       .select().single();
-    if (!error) {
-      setMinhaListaEspera(ls => [...ls, data]);
-      showToast("Você entrou na lista de espera.");
+    if (error) {
+      console.error(error);
+      showToast(`Erro ao entrar na lista de espera: ${error.message}`, "erro");
+      return;
     }
+    setMinhaListaEspera(ls => [...ls, data]);
+    showToast("Você entrou na lista de espera.");
   }
 
   async function sairListaEspera(id) {
     const { error } = await supabase.from("lista_espera").delete().eq("id", id);
-    if (!error) {
-      setMinhaListaEspera(ls => ls.filter(l => l.id !== id));
-      showToast("Você saiu da lista de espera.");
+    if (error) {
+      console.error(error);
+      showToast(`Erro ao sair da lista de espera: ${error.message}`, "erro");
+      return;
     }
+    setMinhaListaEspera(ls => ls.filter(l => l.id !== id));
+    showToast("Você saiu da lista de espera.");
   }
 
   return (
@@ -952,12 +1002,13 @@ export default function AcervoView({
       {toast && (
         <div style={{
           position: "fixed", bottom: 24, right: 24, zIndex: 200,
-          background: COLORS.primaryDark, color: "#fff",
+          background: toastTipo === "erro" ? COLORS.danger : COLORS.primaryDark, color: "#fff",
           padding: "12px 20px", borderRadius: 10, fontSize: 14, fontWeight: 500,
+          maxWidth: 420,
           display: "flex", alignItems: "center", gap: 8,
           boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
         }}>
-          <Check size={15} /> {toast}
+          {toastTipo === "erro" ? <X size={15} /> : <Check size={15} />} {toast}
         </div>
       )}
     </div>

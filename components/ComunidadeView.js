@@ -2,8 +2,122 @@
 import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { COLORS, FONT } from "@/lib/design";
+import { Heart, ThumbsUp, Lightbulb } from "lucide-react";
 
 const supabase = createClient();
+
+const COLUNAS_SUGESTAO = ["Em análise", "Planejado", "Em desenvolvimento", "Concluído", "Recusado"];
+const PRIORIDADES = ["Alta", "Média", "Baixa"];
+const COR_PRIORIDADE = { Alta: COLORS.danger, Média: COLORS.warn, Baixa: COLORS.textLight };
+
+function fmtDataCurta(s) {
+  return s ? new Date(s).toLocaleDateString("pt-BR") : "";
+}
+
+function NovaSugestaoForm({ onCriar, criando }) {
+  const [titulo, setTitulo] = useState("");
+  const [descricao, setDescricao] = useState("");
+
+  async function enviar() {
+    if (!titulo.trim()) return;
+    await onCriar(titulo.trim(), descricao.trim());
+    setTitulo("");
+    setDescricao("");
+  }
+
+  return (
+    <div style={{ background: COLORS.bgCard, border: `1.5px solid ${COLORS.accent}33`, borderRadius: 12, padding: "16px 18px", marginBottom: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <Lightbulb size={16} color={COLORS.accent} />
+        <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: COLORS.text, fontFamily: FONT.serif }}>Sugerir algo novo</p>
+      </div>
+      <input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Título da sugestão"
+        style={{ ...inputStyle, marginBottom: 10 }} />
+      <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={2}
+        placeholder="Descreva sua ideia (opcional)" style={{ ...inputStyle, resize: "vertical", marginBottom: 10 }} />
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button onClick={enviar} disabled={criando || !titulo.trim()}
+          style={{ background: COLORS.accent, color: "#fff", border: "none", padding: "9px 18px", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: FONT.sans }}>
+          {criando ? "Enviando…" : "Enviar sugestão"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SugestaoCard({ sugestao, votos, votei, onVotar, isAdmin, onAtualizar }) {
+  return (
+    <div style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderLeft: `3px solid ${COLORS.accent}`, borderRadius: 10, padding: "14px 16px", marginBottom: 10 }}>
+      <p style={{ margin: "0 0 4px", fontWeight: 700, fontSize: 14, color: COLORS.text }}>{sugestao.titulo}</p>
+      {sugestao.descricao && (
+        <p style={{ margin: "0 0 10px", fontSize: 13, color: COLORS.textLight, lineHeight: 1.5 }}>{sugestao.descricao}</p>
+      )}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: sugestao.prioridade || isAdmin ? 10 : 0 }}>
+        <span style={{ fontSize: 11, color: COLORS.textLight }}>{sugestao.profiles?.nome ?? "Usuário"} · {fmtDataCurta(sugestao.created_at)}</span>
+        <button onClick={() => onVotar(sugestao)}
+          style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: `1px solid ${votei ? COLORS.accent : COLORS.border}`,
+            borderRadius: 20, padding: "4px 10px", cursor: "pointer", fontSize: 12, fontWeight: 600,
+            color: votei ? COLORS.accent : COLORS.textLight, fontFamily: FONT.sans }}>
+          <ThumbsUp size={12} /> {votos}
+        </button>
+      </div>
+      {(sugestao.prioridade || isAdmin) && (
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {isAdmin ? (
+            <>
+              <select value={sugestao.prioridade ?? ""} onChange={e => onAtualizar(sugestao, { prioridade: e.target.value || null })}
+                style={{ ...selectMiniStyle, color: sugestao.prioridade ? COR_PRIORIDADE[sugestao.prioridade] : COLORS.textLight }}>
+                <option value="">Prioridade</option>
+                {PRIORIDADES.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <select value={sugestao.status_sugestao} onChange={e => onAtualizar(sugestao, { status_sugestao: e.target.value })}
+                style={selectMiniStyle}>
+                {COLUNAS_SUGESTAO.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </>
+          ) : sugestao.prioridade ? (
+            <span style={{ fontSize: 11, fontWeight: 600, color: COR_PRIORIDADE[sugestao.prioridade] }}>Prioridade {sugestao.prioridade}</span>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SugestoesBoard({ sugestoes, votosPorSugestao, meusVotos, isAdmin, userId, onVotar, onAtualizar, onCriar, criando }) {
+  const porColuna = useMemo(() => {
+    const mapa = {};
+    COLUNAS_SUGESTAO.forEach(c => mapa[c] = []);
+    sugestoes.forEach(s => {
+      (mapa[s.status_sugestao] ?? (mapa[s.status_sugestao] = [])).push(s);
+    });
+    Object.values(mapa).forEach(lista => lista.sort((a, b) => (votosPorSugestao[b.id] ?? 0) - (votosPorSugestao[a.id] ?? 0)));
+    return mapa;
+  }, [sugestoes, votosPorSugestao]);
+
+  return (
+    <div>
+      <NovaSugestaoForm onCriar={onCriar} criando={criando} />
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${COLUNAS_SUGESTAO.length}, minmax(220px, 1fr))`, gap: 14, overflowX: "auto" }}>
+        {COLUNAS_SUGESTAO.map(coluna => (
+          <div key={coluna} style={{ background: `${COLORS.accent}0d`, border: `1px solid ${COLORS.accent}33`, borderRadius: 12, padding: "12px 10px", minWidth: 220 }}>
+            <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, color: COLORS.accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              {coluna} ({porColuna[coluna]?.length ?? 0})
+            </p>
+            {(porColuna[coluna] ?? []).length === 0 ? (
+              <p style={{ fontSize: 12, color: COLORS.textLight, margin: 0 }}>Nada por aqui.</p>
+            ) : (
+              porColuna[coluna].map(s => (
+                <SugestaoCard key={s.id} sugestao={s} votos={votosPorSugestao[s.id] ?? 0} votei={meusVotos.has(s.id)}
+                  onVotar={onVotar} isAdmin={isAdmin} onAtualizar={onAtualizar} />
+              ))
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function fmtData(s) {
   if (!s) return "";
@@ -70,13 +184,58 @@ function GrupoModal({ grupo, isAdmin, onSave, onClose }) {
   );
 }
 
-export default function ComunidadeView({ gruposIniciais, postsIniciais, nomeAutor, isAdmin }) {
+export default function ComunidadeView({ gruposIniciais, postsIniciais, sugestoesIniciais = [], votosIniciais = [], nomeAutor, userId, isAdmin }) {
+  const [aba, setAba] = useState("feed");
   const [grupos, setGrupos] = useState(gruposIniciais);
   const [posts, setPosts] = useState(postsIniciais);
   const [grupoAtivo, setGrupoAtivo] = useState(gruposIniciais[0]?.id ?? null);
   const [modalGrupo, setModalGrupo] = useState(null);
   const [novoPost, setNovoPost] = useState("");
   const [enviando, setEnviando] = useState(false);
+
+  const [sugestoes, setSugestoes] = useState(sugestoesIniciais);
+  const [votos, setVotos] = useState(votosIniciais);
+  const [criandoSugestao, setCriandoSugestao] = useState(false);
+
+  const votosPorSugestao = useMemo(() => {
+    const mapa = {};
+    votos.forEach(v => { mapa[v.sugestao_id] = (mapa[v.sugestao_id] ?? 0) + 1; });
+    return mapa;
+  }, [votos]);
+
+  const meusVotos = useMemo(
+    () => new Set(votos.filter(v => v.usuario_id === userId).map(v => v.sugestao_id)),
+    [votos, userId]
+  );
+
+  async function criarSugestao(titulo, descricao) {
+    setCriandoSugestao(true);
+    const { data, error } = await supabase
+      .from("sugestoes")
+      .insert({ usuario_id: userId, titulo, descricao, status_sugestao: "Em análise" })
+      .select("*, profiles(nome)")
+      .single();
+    setCriandoSugestao(false);
+    if (!error && data) setSugestoes(ss => [data, ...ss]);
+  }
+
+  async function votarSugestao(sugestao) {
+    const jaVotei = meusVotos.has(sugestao.id);
+    if (jaVotei) {
+      await supabase.from("sugestoes_votos").delete().eq("sugestao_id", sugestao.id).eq("usuario_id", userId);
+      setVotos(vs => vs.filter(v => !(v.sugestao_id === sugestao.id && v.usuario_id === userId)));
+    } else {
+      await supabase.from("sugestoes_votos").insert({ sugestao_id: sugestao.id, usuario_id: userId });
+      setVotos(vs => [...vs, { sugestao_id: sugestao.id, usuario_id: userId }]);
+    }
+  }
+
+  async function atualizarSugestao(sugestao, campos) {
+    const { data, error } = await supabase
+      .from("sugestoes").update(campos).eq("id", sugestao.id)
+      .select("*, profiles(nome)").single();
+    if (!error && data) setSugestoes(ss => ss.map(s => s.id === sugestao.id ? data : s));
+  }
 
   const postsFiltrados = useMemo(
     () => posts.filter(p => p.grupo_id === grupoAtivo),
@@ -134,11 +293,34 @@ export default function ComunidadeView({ gruposIniciais, postsIniciais, nomeAuto
           <h1 style={{ margin: 0, fontSize: 22, fontFamily: FONT.serif, color: COLORS.text }}>Comunidade</h1>
           <p style={{ margin: "4px 0 0", fontSize: 14, color: COLORS.textLight }}>Grupos de leitura e discussões</p>
         </div>
-        {isAdmin && (
+        {isAdmin && aba === "feed" && (
           <button onClick={() => setModalGrupo("novo")} style={btnPrimario}>+ Novo Grupo</button>
         )}
       </div>
 
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, borderBottom: `1.5px solid ${COLORS.border}` }}>
+        {[{ v: "feed", label: "Feed" }, { v: "sugestoes", label: `Sugestões${sugestoes.length ? ` (${sugestoes.length})` : ""}` }].map(({ v, label }) => (
+          <button key={v} onClick={() => setAba(v)} style={{
+            padding: "10px 4px", marginBottom: -2, fontSize: 14, fontWeight: 600, background: "none", border: "none", cursor: "pointer",
+            color: aba === v ? (v === "sugestoes" ? COLORS.accent : COLORS.primaryDark) : COLORS.textLight,
+            borderBottom: aba === v ? `2.5px solid ${v === "sugestoes" ? COLORS.accent : COLORS.primary}` : "2.5px solid transparent",
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {aba === "sugestoes" ? (
+        <SugestoesBoard
+          sugestoes={sugestoes}
+          votosPorSugestao={votosPorSugestao}
+          meusVotos={meusVotos}
+          isAdmin={isAdmin}
+          userId={userId}
+          onVotar={votarSugestao}
+          onAtualizar={atualizarSugestao}
+          onCriar={criarSugestao}
+          criando={criandoSugestao}
+        />
+      ) : (
       <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 24, alignItems: "start" }}>
         {/* Sidebar de grupos */}
         <div style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
@@ -240,6 +422,7 @@ export default function ComunidadeView({ gruposIniciais, postsIniciais, nomeAuto
           )}
         </div>
       </div>
+      )}
 
       {modalGrupo && (
         <GrupoModal

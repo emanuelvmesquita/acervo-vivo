@@ -13,16 +13,21 @@ export default async function ComunidadePage() {
     .eq("id", user.id)
     .single();
 
-  const [{ data: grupos }, { data: posts }] = await Promise.all([
+  const [{ data: grupos }, { data: posts }, { data: sugestoes }, { data: votos }] = await Promise.all([
     supabase.from("grupos").select("*").order("nome"),
     supabase.from("posts").select("*").order("created_at", { ascending: false }).limit(100),
+    supabase.from("sugestoes").select("*, profiles(nome)").order("created_at", { ascending: false }),
+    supabase.from("sugestoes_votos").select("sugestao_id, usuario_id"),
   ]);
 
   return (
     <ComunidadeView
       gruposIniciais={grupos ?? []}
       postsIniciais={posts ?? []}
+      sugestoesIniciais={sugestoes ?? []}
+      votosIniciais={votos ?? []}
       nomeAutor={profile?.nome ?? "Usuário"}
+      userId={user.id}
       isAdmin={profile?.perfil === "administrador"}
     />
   );

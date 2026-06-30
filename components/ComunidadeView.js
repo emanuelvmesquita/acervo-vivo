@@ -495,3 +495,5 @@ const btnPrimario = { background: COLORS.primary, color: "#fff", border: "none",
 const btnSecundario = { background: "#fff", color: COLORS.text, border: `1px solid ${COLORS.border}`,
   padding: "8px 16px", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: FONT.sans };
 const btnIcon = { background: "none", border: "none", cursor: "pointer", fontSize: 18, color: COLORS.textLight, padding: "4px 8px" };
+const selectMiniStyle = { border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: "3px 6px",
+  fontSize: 11, fontWeight: 600, fontFamily: FONT.sans, background: "#fff", cursor: "pointer", outline: "none" };

@@ -15,12 +15,15 @@ export default async function AcervoPage() {
 
   const isAdmin = profile?.perfil === "administrador";
 
-  const [{ data: minhasSolicitacoes }, { data: minhaListaEspera }, { data: listaEsperaTodos }] = await Promise.all([
+  const [{ data: minhasSolicitacoes }, { data: minhaListaEspera }, { data: listaEsperaTodos }, { data: meusEmprestimosAtivos }] = await Promise.all([
     supabase.from("solicitacoes_emprestimo").select("*").eq("usuario_id", user.id),
     supabase.from("lista_espera").select("*").eq("usuario_id", user.id),
     isAdmin
       ? supabase.from("lista_espera").select("*, profiles(nome)").order("created_at")
       : Promise.resolve({ data: [] }),
+    isAdmin
+      ? Promise.resolve({ data: [] })
+      : supabase.from("emprestimos").select("exemplar_id, status").eq("usuario_id", user.id).in("status", ["Ativo", "Atrasado"]),
   ]);
 
   return (
@@ -32,6 +35,7 @@ export default async function AcervoPage() {
       minhasSolicitacoesIniciais={minhasSolicitacoes ?? []}
       minhaListaEsperaIniciais={minhaListaEspera ?? []}
       listaEsperaTodosIniciais={listaEsperaTodos ?? []}
+      meusEmprestimosAtivosIniciais={meusEmprestimosAtivos ?? []}
     />
   );
 }

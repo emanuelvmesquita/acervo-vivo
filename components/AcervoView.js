@@ -302,7 +302,7 @@ function ConfirmModal({ mensagem, onConfirm, onClose }) {
 
 function TituloDetalheModal({
   titulo, exemplaresDoTitulo, isAdmin,
-  minhaSolicitacaoPendente, minhaEntradaListaEspera, listaEsperaDoTitulo,
+  minhaEmprestimoAtivo, minhaSolicitacaoPendente, minhaEntradaListaEspera, listaEsperaDoTitulo,
   onClose, onEditarExemplar, onNovoExemplar, onExcluirExemplar,
   onMarcarIndisponivel, onMarcarDisponivel,
   onSolicitarEmprestimo, onCancelarSolicitacao,
@@ -382,7 +382,15 @@ function TituloDetalheModal({
       {/* Ação do leitor */}
       {!isAdmin && (
         <div style={{ marginTop: 20, paddingTop: 18, borderTop: `1px solid ${COLORS.border}` }}>
-          {minhaSolicitacaoPendente ? (
+          {minhaEmprestimoAtivo ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, background: COLORS.bg, borderRadius: 10, padding: "12px 14px" }}>
+              <CheckCircle2 size={16} color={COLORS.textLight} />
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>Emprestado</p>
+                <p style={{ fontSize: 12, color: COLORS.textLight }}>Você já está com um exemplar deste título.</p>
+              </div>
+            </div>
+          ) : minhaSolicitacaoPendente ? (
             <div style={{ display: "flex", alignItems: "center", gap: 10, background: COLORS.warnLight, borderRadius: 10, padding: "12px 14px" }}>
               <Clock size={16} color={COLORS.warn} />
               <div style={{ flex: 1 }}>
@@ -443,12 +451,14 @@ function TituloDetalheModal({
 export default function AcervoView({
   titulosIniciais, exemplaresIniciais, isAdmin = false, userId,
   minhasSolicitacoesIniciais = [], minhaListaEsperaIniciais = [], listaEsperaTodosIniciais = [],
+  meusEmprestimosAtivosIniciais = [],
 }) {
   const [titulos, setTitulos] = useState(titulosIniciais);
   const [exemplares, setExemplares] = useState(exemplaresIniciais);
   const [minhasSolicitacoes, setMinhasSolicitacoes] = useState(minhasSolicitacoesIniciais);
   const [minhaListaEspera, setMinhaListaEspera] = useState(minhaListaEsperaIniciais);
   const listaEsperaTodos = listaEsperaTodosIniciais;
+  const meusEmprestimosAtivos = meusEmprestimosAtivosIniciais;
 
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todos");
@@ -512,6 +522,16 @@ export default function AcervoView({
     }
     return map;
   }, [listaEsperaTodos]);
+
+  const meuEmprestimoAtivoPorTitulo = useMemo(() => {
+    const exemplarParaTitulo = new Map(exemplares.map(e => [e.id, e.titulo_id]));
+    const map = new Map();
+    for (const emp of meusEmprestimosAtivos) {
+      const tituloId = exemplarParaTitulo.get(emp.exemplar_id);
+      if (tituloId) map.set(tituloId, emp);
+    }
+    return map;
+  }, [exemplares, meusEmprestimosAtivos]);
 
   const titulosFiltrados = useMemo(() => {
     return titulos.filter(t => {
@@ -932,6 +952,7 @@ export default function AcervoView({
           titulo={detalheTitulo}
           exemplaresDoTitulo={exemplares.filter(e => e.titulo_id === detalheTitulo.id)}
           isAdmin={isAdmin}
+          minhaEmprestimoAtivo={meuEmprestimoAtivoPorTitulo.get(detalheTitulo.id)}
           minhaSolicitacaoPendente={minhasSolicitacoesPendentesPorTitulo.get(detalheTitulo.id)}
           minhaEntradaListaEspera={minhaListaEsperaPorTitulo.get(detalheTitulo.id)}
           listaEsperaDoTitulo={listaEsperaPorTitulo.get(detalheTitulo.id) ?? []}
